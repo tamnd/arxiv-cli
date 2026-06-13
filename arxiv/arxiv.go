@@ -1,52 +1,206 @@
-// Package arxiv is the library behind the arxiv command line:
-// the HTTP client, request shaping, and the typed data models for arxiv.
+// Package arxiv is the library behind the arxiv command: the HTTP client,
+// request shaping, and the typed data models for the arXiv Open Access API.
 //
-// The Client here is the spine every command shares. It sets a real
-// User-Agent, paces requests so a busy session stays polite, and retries the
-// transient failures (429 and 5xx) that any public site throws under load.
-// Build your endpoint calls and JSON decoding on top of it.
+// The API endpoint is https://export.arxiv.org/api/query. It returns Atom XML
+// and requires no key. The arXiv ToS recommends no more than 3 requests per
+// second; the default rate is 400 ms between calls.
 package arxiv
 
 import (
 	"context"
+	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
+	"sync"
 	"time"
 )
 
-// DefaultUserAgent identifies the client to arxiv. A real, honest
-// User-Agent is both polite and the thing most likely to keep you unblocked.
+const (
+	apiBase = "https://export.arxiv.org/api/query"
+)
+
+// DefaultUserAgent identifies the client to arXiv.
 const DefaultUserAgent = "arxiv/dev (+https://github.com/tamnd/arxiv-cli)"
 
-// Client talks to arxiv over HTTP.
-type Client struct {
-	HTTP      *http.Client
-	UserAgent string
-	// Rate is the minimum gap between requests. Zero means no pacing.
-	Rate    time.Duration
-	Retries int
+// ErrNotFound is returned when the API returns an empty entry list for a given id.
+var ErrNotFound = errors.New("not found")
 
-	last time.Time
+// Config holds constructor parameters.
+type Config struct {
+	UserAgent string
+	Rate      time.Duration
+	Retries   int
+	Timeout   time.Duration
 }
 
-// NewClient returns a Client with sensible defaults: a 30s timeout, a 200ms
-// minimum gap between requests, and five retries on transient errors.
-func NewClient() *Client {
-	return &Client{
-		HTTP:      &http.Client{Timeout: 30 * time.Second},
+// DefaultConfig returns sensible defaults.
+func DefaultConfig() Config {
+	return Config{
 		UserAgent: DefaultUserAgent,
-		Rate:      200 * time.Millisecond,
+		Rate:      400 * time.Millisecond,
 		Retries:   5,
+		Timeout:   30 * time.Second,
 	}
 }
 
-// Get fetches url and returns the response body. It paces and retries according
-// to the client's settings. The caller owns nothing extra; the body is read
-// fully and closed here.
-func (c *Client) Get(ctx context.Context, url string) ([]byte, error) {
+// Client talks to the arXiv Open Access API.
+type Client struct {
+	httpClient *http.Client
+	userAgent  string
+	rate       time.Duration
+	retries    int
+	mu         sync.Mutex
+	last       time.Time
+}
+
+// NewClient returns a Client with the given config.
+func NewClient(cfg Config) *Client {
+	return &Client{
+		httpClient: &http.Client{Timeout: cfg.Timeout},
+		userAgent:  cfg.UserAgent,
+		rate:       cfg.Rate,
+		retries:    cfg.Retries,
+	}
+}
+
+// SearchOptions controls a Search call.
+type SearchOptions struct {
+	Query    string // free-text query
+	Category string // "" = no category filter
+	Sort     string // "relevance" | "date" | "updated"
+	Limit    int
+}
+
+// Search returns up to opts.Limit papers matching the query.
+func (c *Client) Search(ctx context.Context, opts SearchOptions) ([]Paper, error) {
+	q := buildQuery(opts.Query, opts.Category)
+	sortBy := sortParam(opts.Sort)
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+
+	params := url.Values{}
+	params.Set("search_query", q)
+	params.Set("max_results", fmt.Sprintf("%d", limit))
+	params.Set("sortBy", sortBy)
+	params.Set("sortOrder", "descending")
+
+	rawURL := apiBase + "?" + params.Encode()
+	feed, err := c.getXML(ctx, rawURL)
+	if err != nil {
+		return nil, err
+	}
+	return feedToPapers(feed), nil
+}
+
+// Paper fetches the single paper with the given id (version suffix stripped).
+// Returns ErrNotFound if the id produces an empty result.
+func (c *Client) Paper(ctx context.Context, id string) (Paper, error) {
+	params := url.Values{}
+	params.Set("id_list", id)
+	params.Set("max_results", "1")
+
+	rawURL := apiBase + "?" + params.Encode()
+	feed, err := c.getXML(ctx, rawURL)
+	if err != nil {
+		return Paper{}, err
+	}
+	if len(feed.Entries) == 0 {
+		return Paper{}, ErrNotFound
+	}
+	return entryToPaper(feed.Entries[0]), nil
+}
+
+// SearchByAuthor returns up to n papers authored by name, sorted newest first.
+func (c *Client) SearchByAuthor(ctx context.Context, name string, n int) ([]Paper, error) {
+	if n <= 0 {
+		n = 10
+	}
+	// quote the name if it contains spaces so the API treats it as a phrase
+	q := "au:" + authorQuery(name)
+
+	params := url.Values{}
+	params.Set("search_query", q)
+	params.Set("max_results", fmt.Sprintf("%d", n))
+	params.Set("sortBy", "submittedDate")
+	params.Set("sortOrder", "descending")
+
+	rawURL := apiBase + "?" + params.Encode()
+	feed, err := c.getXML(ctx, rawURL)
+	if err != nil {
+		return nil, err
+	}
+	return feedToPapers(feed), nil
+}
+
+// ─── internal helpers ─────────────────────────────────────────────────────────
+
+func buildQuery(query, category string) string {
+	// join words with +AND+ for AND semantics
+	words := strings.Fields(query)
+	q := "all:" + strings.Join(words, "+AND+")
+	if category != "" {
+		q += "+AND+cat:" + category
+	}
+	return q
+}
+
+func authorQuery(name string) string {
+	if strings.ContainsAny(name, " \t") {
+		// wrap in quotes for phrase search
+		return `"` + strings.TrimSpace(name) + `"`
+	}
+	return name
+}
+
+func sortParam(s string) string {
+	switch s {
+	case "date":
+		return "submittedDate"
+	case "updated":
+		return "lastUpdatedDate"
+	default:
+		return "relevance"
+	}
+}
+
+func feedToPapers(feed *atomFeed) []Paper {
+	out := make([]Paper, 0, len(feed.Entries))
+	for _, e := range feed.Entries {
+		out = append(out, entryToPaper(e))
+	}
+	return out
+}
+
+// getXML fetches a URL and XML-decodes the response into an atomFeed.
+func (c *Client) getXML(ctx context.Context, rawURL string) (*atomFeed, error) {
+	body, err := c.get(ctx, rawURL)
+	if err != nil {
+		return nil, err
+	}
+	var feed atomFeed
+	if err := xml.Unmarshal(body, &feed); err != nil {
+		return nil, fmt.Errorf("decode arxiv response: %w", err)
+	}
+	// check for API-level error entry
+	if len(feed.Entries) == 1 {
+		title := strings.TrimSpace(feed.Entries[0].Title)
+		if strings.HasPrefix(title, "Error ") {
+			return nil, fmt.Errorf("arxiv api error: %s", cleanText(feed.Entries[0].Summary))
+		}
+	}
+	return &feed, nil
+}
+
+// get fetches a URL with pacing and retries.
+func (c *Client) get(ctx context.Context, rawURL string) ([]byte, error) {
 	var lastErr error
-	for attempt := 0; attempt <= c.Retries; attempt++ {
+	for attempt := 0; attempt <= c.retries; attempt++ {
 		if attempt > 0 {
 			select {
 			case <-ctx.Done():
@@ -54,7 +208,7 @@ func (c *Client) Get(ctx context.Context, url string) ([]byte, error) {
 			case <-time.After(backoff(attempt)):
 			}
 		}
-		body, retry, err := c.do(ctx, url)
+		body, retry, err := c.do(ctx, rawURL)
 		if err == nil {
 			return body, nil
 		}
@@ -63,18 +217,19 @@ func (c *Client) Get(ctx context.Context, url string) ([]byte, error) {
 			return nil, err
 		}
 	}
-	return nil, fmt.Errorf("get %s: %w", url, lastErr)
+	return nil, fmt.Errorf("get %s: %w", rawURL, lastErr)
 }
 
-func (c *Client) do(ctx context.Context, url string) (body []byte, retry bool, err error) {
+func (c *Client) do(ctx context.Context, rawURL string) ([]byte, bool, error) {
 	c.pace()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, false, err
 	}
-	req.Header.Set("User-Agent", c.UserAgent)
+	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("Accept", "application/atom+xml")
 
-	resp, err := c.HTTP.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, true, err
 	}
@@ -86,20 +241,20 @@ func (c *Client) do(ctx context.Context, url string) (body []byte, retry bool, e
 	if resp.StatusCode != http.StatusOK {
 		return nil, false, fmt.Errorf("http %d", resp.StatusCode)
 	}
-
-	b, err := io.ReadAll(resp.Body)
+	b, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
 	if err != nil {
 		return nil, true, err
 	}
 	return b, false, nil
 }
 
-// pace blocks until at least Rate has passed since the previous request.
 func (c *Client) pace() {
-	if c.Rate <= 0 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.rate <= 0 {
 		return
 	}
-	if wait := c.Rate - time.Since(c.last); wait > 0 {
+	if wait := c.rate - time.Since(c.last); wait > 0 {
 		time.Sleep(wait)
 	}
 	c.last = time.Now()
