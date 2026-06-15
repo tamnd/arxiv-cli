@@ -9,15 +9,15 @@ import (
 // Paper is the canonical record emitted for every search, paper, and author result.
 // JSON keys are stable.
 type Paper struct {
-	ID        string   `json:"id"`
-	Title     string   `json:"title"`
-	Authors   []string `json:"authors"`
-	Category  string   `json:"category"`
-	Published string   `json:"published"`
-	Updated   string   `json:"updated"`
-	Summary   string   `json:"summary"`
-	URL       string   `json:"url"`
-	PDF       string   `json:"pdf"`
+	ID        string   `json:"id"        kit:"id" table:"id"`
+	Title     string   `json:"title"              table:"title"`
+	Authors   []string `json:"authors"            table:"authors"`
+	Category  string   `json:"category"           table:"category"`
+	Published string   `json:"published"          table:"date"`
+	Updated   string   `json:"updated"            table:"-"`
+	Summary   string   `json:"summary"            table:"-"`
+	URL       string   `json:"url"                table:"abs,url"`
+	PDF       string   `json:"pdf"                table:"pdf,url"`
 }
 
 // Category is the static record used by the categories command.

@@ -26,6 +26,9 @@ const (
 // DefaultUserAgent identifies the client to arXiv.
 const DefaultUserAgent = "arxiv/dev (+https://github.com/tamnd/arxiv-cli)"
 
+// Host is the arXiv site this client represents.
+const Host = "arxiv.org"
+
 // ErrNotFound is returned when the API returns an empty entry list for a given id.
 var ErrNotFound = errors.New("not found")
 
