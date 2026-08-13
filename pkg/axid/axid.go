@@ -111,7 +111,7 @@ func Parse(ref string) (ID, error) {
 
 	id, err := parseBare(s)
 	if err != nil {
-		return ID{}, fmt.Errorf("%q is not an arXiv id: %w", ref, err)
+		return ID{}, fmt.Errorf("cannot read %q as an arXiv id: %w", ref, err)
 	}
 	id.Input = raw
 	return id, nil
@@ -176,7 +176,7 @@ func unwrapURL(s string) (string, error) {
 		}
 		return "", fmt.Errorf("no arXiv id in the path of %q", s)
 	}
-	return "", fmt.Errorf("%q is not an arxiv.org or doi.org URL", s)
+	return "", fmt.Errorf("the URL %q is not on arxiv.org or doi.org", s)
 }
 
 // parseBare parses a bare id, with or without a version suffix.

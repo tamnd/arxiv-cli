@@ -15,6 +15,17 @@ func mapErr(err error) error {
 	if err == nil {
 		return nil
 	}
+	// arXiv's own rejection, lifted out of the error feed. When arXiv named the
+	// problem it is the query that is wrong, so it exits 2 carrying arXiv's
+	// wording rather than a paraphrase of it.
+	var apiErr *APIError
+	if errors.As(err, &apiErr) {
+		if apiErr.IsUsage() {
+			return errs.Wrap(errs.KindUsage, err, "arxiv rejected the query: %s", apiErr.Message)
+		}
+		return errs.Wrap(errs.KindGeneric, err, "arxiv returned an error: %s", apiErr.Message)
+	}
+
 	switch {
 	case errors.Is(err, ErrNotFound):
 		return errs.Wrap(errs.KindNotFound, err, "%s", err.Error())
