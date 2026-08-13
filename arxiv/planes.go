@@ -55,6 +55,18 @@ var (
 // Planes is the table, in the order `arxiv planes` prints it.
 var Planes = []Plane{APIPlane, HTMLPlane}
 
+// Pace is the gap this client is keeping on a plane, which is the default in
+// the table unless --rate or --html-rate moved it. A crawl estimate that used
+// the table would be five times out on a client the user slowed down.
+func (c *Client) Pace(plane string) time.Duration {
+	if lim := c.limiters[plane]; lim != nil {
+		lim.mu.Lock()
+		defer lim.mu.Unlock()
+		return lim.pace
+	}
+	return 0
+}
+
 // PlaneFor returns the plane a host belongs to.
 //
 // The plane is chosen by host and never by the caller. A read that has to fall

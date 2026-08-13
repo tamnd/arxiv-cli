@@ -31,6 +31,10 @@ const (
 	// that carries an ORCID and the only one where arXiv says a named person
 	// owns a set of papers.
 	SurfaceAuthorID = "s8" // the author identifier page
+	// SurfaceBibTeX is arXiv's own BibTeX entry. Nothing on it is new, which is
+	// why no record carries it in a via map, but a read of it is still a
+	// request and the read log names it like any other.
+	SurfaceBibTeX = "s9" // the BibTeX entry
 	// SurfaceFullText is the LaTeXML rendering, which is the only surface that
 	// carries an affiliation, a section tree or the body of a paper at all.
 	SurfaceFullText = "s10" // the LaTeXML full text
@@ -53,6 +57,7 @@ var SurfaceNames = map[string]string{
 	SurfaceRSS:       "the announcement feed",
 	SurfaceTaxonomy:  "the category taxonomy",
 	SurfaceAuthorID:  "the author identifier page",
+	SurfaceBibTeX:    "the BibTeX entry",
 	SurfaceFullText:  "the LaTeXML full text",
 	SurfaceTrackback: "the trackback page",
 	SurfaceFiles:     "the files",
@@ -391,20 +396,28 @@ func (d Depth) Cost(n int) time.Duration {
 	if n <= 0 {
 		return 0
 	}
-	var html, api int
+	api, html := d.PlaneRequests()
+	return time.Duration(n) * (time.Duration(api)*APIPlane.Pace + time.Duration(html)*HTMLPlane.Pace)
+}
+
+// PlaneRequests splits one paper's cost across the two planes.
+//
+// A crawl budgets the planes separately, so it needs the split rather than the
+// total: three API requests and two HTML ones are five requests and about four
+// fifths of a minute, and the same five all on the API plane are fifteen
+// seconds.
+func (d Depth) PlaneRequests() (api, html int) {
 	switch d {
 	case DepthQuick:
-		api = 1
+		return 1, 0
 	case DepthMeta:
-		api = 2
+		return 2, 0
 	case DepthFull:
-		api = 3
-		html = 1
+		return 3, 1
 	case DepthText:
-		api = 3
-		html = 2
+		return 3, 2
 	}
-	return time.Duration(n) * (time.Duration(api)*APIPlane.Pace + time.Duration(html)*HTMLPlane.Pace)
+	return 1, 0
 }
 
 // Missed is the sentences naming what this depth did not look at.
