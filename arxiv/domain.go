@@ -73,6 +73,7 @@ func (Domain) Register(app *kit.App) {
 	registerNew(app)
 	registerPaper(app)
 	registerFullText(app)
+	registerTrackbacks(app)
 	registerBibTeX(app)
 	registerCite(app)
 	registerAuthor(app)
@@ -530,6 +531,84 @@ MathML.`,
 			return err
 		}
 		return emit(&full)
+	})
+}
+
+type trackbacksIn struct {
+	Ref     string  `kit:"arg" help:"an arXiv id, a versioned id, or an abs URL"`
+	Recent  bool    `kit:"flag" help:"the site-wide feed of recent trackbacks instead of one paper's"`
+	Views   int     `kit:"flag" default:"25" help:"how many recent trackbacks to read: 25, 50, 100 or 200"`
+	Resolve bool    `kit:"flag" help:"follow each redirect to the page that sent the ping, at fifteen seconds each"`
+	Client  *Client `kit:"inject"`
+}
+
+func registerTrackbacks(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "trackbacks",
+		Group:   "read",
+		Summary: "Inbound links: the external pages that link to a paper",
+		// Single is about the empty stream and not about the arity. Most
+		// papers have no trackbacks, arXiv says so on a page of its own, and
+		// "nothing links to this paper" is an answer rather than a failed
+		// search. Without this an empty page exits 3 like a query that matched
+		// nothing, which is a different thing.
+		Single: true,
+		Args:   []kit.Arg{{Name: "ref", Help: "an arXiv id, a versioned id, or an abs URL", Optional: true}},
+		Long: `Read the trackbacks recorded for a paper.
+
+A trackback is a blog telling arXiv that it linked to a paper. It is the only
+inbound link data arXiv publishes and the only edge in this whole tool that
+points at a paper rather than away from it.
+
+A paper with no trackbacks is not an error. Most papers have none, "no external
+page has linked to this" is a true answer, and it comes back as an empty list
+and exit 0. A paper arXiv has never heard of is a different answer and exits 6.
+
+--recent reads the site-wide feed instead, which is the same data the other way
+round: recent posts and the papers each one links. A post linking three papers
+comes out as three records, because a post that links three papers is three
+claims.
+
+The url on a record is arXiv's redirect and not the blog's own address, because
+that is what the page publishes. --resolve follows each redirect to find where
+it goes, which is one request a trackback on the fifteen second plane, so a
+paper with a hundred trackbacks takes half an hour. The redirect is followed as
+far as arXiv's answer and no further: the external site is never contacted.
+
+robots.txt disallows /tb, so this is only ever read for a paper somebody named.
+The crawler never touches it.`,
+	}, func(ctx context.Context, in trackbacksIn, emit func(*Trackback) error) error {
+		var (
+			tbs []Trackback
+			err error
+		)
+		switch {
+		case in.Recent:
+			if in.Ref != "" {
+				return errs.Usage("--recent reads the whole feed, so it takes no paper")
+			}
+			tbs, err = in.Client.RecentTrackbacks(ctx, in.Views)
+		case in.Ref == "":
+			return errs.Usage("give a paper, or --recent for the site-wide feed")
+		default:
+			tbs, err = in.Client.Trackbacks(ctx, in.Ref)
+		}
+		if err != nil {
+			return mapErr(err)
+		}
+		if in.Resolve && len(tbs) > 0 {
+			in.Client.notice("resolving %d redirects at fifteen seconds each, about %s",
+				len(tbs), (time.Duration(len(tbs)) * 15 * time.Second).Round(time.Minute))
+			if err := in.Client.Resolve(ctx, tbs); err != nil {
+				return mapErr(err)
+			}
+		}
+		for i := range tbs {
+			if err := emit(&tbs[i]); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }
 

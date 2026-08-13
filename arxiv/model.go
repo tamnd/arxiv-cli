@@ -34,19 +34,23 @@ const (
 	// SurfaceFullText is the LaTeXML rendering, which is the only surface that
 	// carries an affiliation, a section tree or the body of a paper at all.
 	SurfaceFullText = "s10" // the LaTeXML full text
+	// SurfaceTrackback is the trackback page, and the only surface anywhere
+	// that points inward: an external page linking to a paper.
+	SurfaceTrackback = "s11" // trackbacks
 )
 
 // SurfaceNames is what each id is, for `arxiv planes` and for help text.
 var SurfaceNames = map[string]string{
-	SurfaceAPI:      "the export API",
-	SurfaceOAI:      "OAI-PMH",
-	SurfaceAbs:      "the abstract page",
-	SurfaceList:     "the category listing",
-	SurfaceSearch:   "the search UI",
-	SurfaceRSS:      "the announcement feed",
-	SurfaceTaxonomy: "the category taxonomy",
-	SurfaceAuthorID: "the author identifier page",
-	SurfaceFullText: "the LaTeXML full text",
+	SurfaceAPI:       "the export API",
+	SurfaceOAI:       "OAI-PMH",
+	SurfaceAbs:       "the abstract page",
+	SurfaceList:      "the category listing",
+	SurfaceSearch:    "the search UI",
+	SurfaceRSS:       "the announcement feed",
+	SurfaceTaxonomy:  "the category taxonomy",
+	SurfaceAuthorID:  "the author identifier page",
+	SurfaceFullText:  "the LaTeXML full text",
+	SurfaceTrackback: "the trackback page",
 }
 
 // Envelope is what every record carries about its own provenance.

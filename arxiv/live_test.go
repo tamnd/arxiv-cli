@@ -1086,3 +1086,135 @@ func TestLiveCiteOfAPaperThatIsNotThere(t *testing.T) {
 		t.Errorf("kind is %v, want not found: %v", errs.KindOf(mapErr(err)), err)
 	}
 }
+
+// TestLiveTrackbacksOfAWellLinkedPaper reads the page that has the most of them
+// of any paper this tool has looked at. The counts move, so this checks the
+// shape of a row rather than how many rows there are.
+func TestLiveTrackbacksOfAWellLinkedPaper(t *testing.T) {
+	c := liveClient(t)
+	tbs, err := c.Trackbacks(context.Background(), "hep-th/9711200")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tbs) < 20 {
+		t.Fatalf("got %d trackbacks for the Maldacena paper, want the twenty odd it has", len(tbs))
+	}
+	for i, tb := range tbs {
+		if tb.Title == "" {
+			t.Errorf("trackback %d has no title", i)
+		}
+		if tb.URL == "" || tb.TrackbackID == "" {
+			t.Errorf("trackback %d has no redirect: url %q, id %q", i, tb.URL, tb.TrackbackID)
+		}
+		if tb.PostedAt.IsZero() {
+			t.Errorf("trackback %d (%q) has no timestamp", i, tb.Title)
+		}
+		if tb.PaperID != "hep-th/9711200" {
+			t.Errorf("trackback %d names paper %q", i, tb.PaperID)
+		}
+	}
+	t.Logf("%d trackbacks, newest %q from %s on %s", len(tbs), tbs[0].Title, tbs[0].BlogName, tbs[0].PostedDate)
+}
+
+// TestLiveTrackbacksOfAPaperWithNone is the answer most papers give. It is an
+// empty list and not an error, which is the whole reason the command does not
+// exit 3 on an empty read.
+func TestLiveTrackbacksOfAPaperWithNone(t *testing.T) {
+	c := liveClient(t)
+	tbs, err := c.Trackbacks(context.Background(), "2401.00001")
+	if err != nil {
+		t.Fatalf("a paper with no trackbacks came back as an error: %v", err)
+	}
+	if len(tbs) != 0 {
+		t.Errorf("got %d trackbacks, want none", len(tbs))
+	}
+}
+
+// TestLiveTrackbacksOfAPaperThatIsNotThere is the other kind of empty. arXiv
+// answers 404 for an id it has no paper for, which is a different answer from
+// the page saying there are no pings.
+func TestLiveTrackbacksOfAPaperThatIsNotThere(t *testing.T) {
+	c := liveClient(t)
+	_, err := c.Trackbacks(context.Background(), "2401.99999")
+	if err == nil {
+		t.Fatal("arxiv answered for a paper that does not exist")
+	}
+	if errs.KindOf(mapErr(err)) != errs.KindNotFound {
+		t.Errorf("kind is %v, want not found: %v", errs.KindOf(mapErr(err)), err)
+	}
+}
+
+// TestLiveRecentTrackbacks reads the site-wide feed. Every row has to name a
+// paper and carry a day, and the day is all the feed gives, so every row also
+// has to say what it is missing.
+func TestLiveRecentTrackbacks(t *testing.T) {
+	c := liveClient(t)
+	tbs, err := c.RecentTrackbacks(context.Background(), 25)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tbs) < 25 {
+		t.Fatalf("got %d records from a feed of 25 posts, want at least one a post", len(tbs))
+	}
+	for i, tb := range tbs {
+		if tb.PaperID == "" || tb.PaperTitle == "" {
+			t.Errorf("record %d names no paper: id %q, title %q", i, tb.PaperID, tb.PaperTitle)
+		}
+		if tb.PostedDate == "" {
+			t.Errorf("record %d (%q) has no date", i, tb.Title)
+		}
+		if !tb.PostedAt.IsZero() {
+			t.Errorf("record %d claims a time of day the feed does not publish: %s", i, tb.PostedAt)
+		}
+		if len(tb.Missed) == 0 {
+			t.Errorf("record %d does not say the time of day is missing", i)
+		}
+	}
+	t.Logf("%d records, newest %q on %s", len(tbs), tbs[0].Title, tbs[0].PostedDate)
+}
+
+// TestLiveRecentTrackbacksRefusesAViewArxivDoesNotOffer checks the flag is
+// refused rather than sent and quietly ignored.
+func TestLiveRecentTrackbacksRefusesAViewArxivDoesNotOffer(t *testing.T) {
+	c := liveClient(t)
+	_, err := c.RecentTrackbacks(context.Background(), 42)
+	if err == nil {
+		t.Fatal("42 was accepted")
+	}
+	if errs.KindOf(err) != errs.KindUsage {
+		t.Errorf("kind is %v, want usage: %v", errs.KindOf(err), err)
+	}
+}
+
+// TestLiveResolveFollowsTheRedirect resolves one trackback and no more, because
+// this runs on the fifteen second plane. The target has to be somewhere else:
+// the point of the redirect is that arXiv knows an address it does not print.
+func TestLiveResolveFollowsTheRedirect(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	tbs, err := c.Trackbacks(ctx, "hep-th/9711200")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tbs) == 0 {
+		t.Skip("no trackbacks to resolve")
+	}
+	one := tbs[:1]
+	if err := c.Resolve(ctx, one); err != nil {
+		t.Fatal(err)
+	}
+	got := one[0]
+	if got.TargetURL == "" {
+		t.Fatalf("%q did not resolve: %v", got.Title, got.Missed)
+	}
+	if !strings.HasPrefix(got.TargetURL, "http") {
+		t.Errorf("target %q is not a URL", got.TargetURL)
+	}
+	if strings.Contains(got.TargetURL, Host) {
+		t.Errorf("the redirect went back to arxiv: %q", got.TargetURL)
+	}
+	if got.Via["target_url"] != SurfaceTrackback {
+		t.Errorf("target_url is attributed to %q", got.Via["target_url"])
+	}
+	t.Logf("%q -> %s", got.Title, got.TargetURL)
+}
