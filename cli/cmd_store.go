@@ -10,6 +10,7 @@ import (
 	"github.com/tamnd/any-cli/kit/errs"
 	"github.com/tamnd/any-cli/kit/render"
 	"github.com/tamnd/arxiv-cli/arxiv"
+	"github.com/tamnd/arxiv-cli/pkg/rdf"
 )
 
 // cmd_store.go is the half of the tool that keeps something. The store is a
@@ -32,6 +33,7 @@ func storeCommands() []kit.Command {
 		newQueryCmd(),
 		newDBCmd(),
 		newExportCmd(),
+		newRDFCmd(),
 	}
 }
 
@@ -236,9 +238,12 @@ nothing about what the store says.`,
 	}
 }
 
-// exportFormats are the ones this command writes today. rdf is doc 04 section 5
-// and lands with `arxiv rdf`.
-var exportFormats = []string{"json", "ndjson", "csv"}
+// exportFormats are the ones this command writes. rdf is n-triples, which is
+// the only one of the three RDF serialisations that belongs in a flag shared
+// with json and csv: it is a line per statement and streams. `arxiv rdf` is
+// where turtle and jsonld live, along with everything else that is particular
+// to RDF.
+var exportFormats = []string{"json", "ndjson", "csv", "rdf"}
 
 // exportKinds are the node kinds that carry a record. Everything else in the
 // store is a node a claim named and nothing read, and those are what `arxiv
@@ -267,7 +272,9 @@ export; arxiv query is how to list those.
 
 --format is the same set the global -o takes, and it is here because an export
 is written to a file rather than looked at, so the format belongs to the
-command and not to the terminal it happened to run in.`,
+command and not to the terminal it happened to run in. rdf is the exception: it
+writes n-triples with the provenance on, and arxiv rdf is where turtle, jsonld
+and --no-provenance are.`,
 		Args: kit.NoArgs,
 		Flags: func(f *kit.FlagSet) {
 			store.bind(f)
@@ -279,6 +286,18 @@ command and not to the terminal it happened to run in.`,
 		Run: func(ctx context.Context, args []string) error {
 			if !contains(exportFormats, format) {
 				return errs.Usage("the --format value %q is not one of %s", format, strings.Join(exportFormats, ", "))
+			}
+			if format == "rdf" {
+				if claims {
+					// The claims are in there either way. RDF has no notion of
+					// a row, so there is nothing for --claims to leave out.
+					return errs.Usage("--format rdf writes the claims and the records together, so --claims says nothing")
+				}
+				d, err := docFromStore(store.resolve(ctx), kind, limit)
+				if err != nil {
+					return err
+				}
+				return writeDoc(d, rdf.Options{Format: rdf.FormatNT, Provenance: true})
 			}
 			st, err := arxiv.OpenStoreReadOnly(store.resolve(ctx))
 			if err != nil {
