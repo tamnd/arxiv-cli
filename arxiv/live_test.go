@@ -13,6 +13,9 @@ package arxiv
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
@@ -1701,4 +1704,213 @@ func TestLiveWalkExpandsTheTaxonomy(t *testing.T) {
 		}
 	}
 	t.Logf("two hops: %v", by)
+}
+
+// TestLiveCrawlFillsAStore is the whole thing end to end: a real read, into a
+// real store, with the read log and the manifest that came out of it.
+//
+// It is one paper at depth meta, which is two API requests and nothing on
+// arxiv.org, so it costs about six seconds.
+func TestLiveCrawlFillsAStore(t *testing.T) {
+	c := liveClient(t)
+	st, err := OpenStore(filepath.Join(t.TempDir(), "arxiv.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = st.Close() }()
+
+	cr, err := NewCrawler(c, st, CrawlOptions{
+		Seeds: []string{"1706.03762"}, Hops: 1, Depth: DepthMeta,
+		Budget: 6, APIOnly: true, Progress: t.Logf,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := cr.Run(context.Background())
+	if err != nil {
+		t.Fatalf("crawl: %v", err)
+	}
+	if m.Papers != 1 {
+		t.Errorf("the crawl read %d papers, want 1", m.Papers)
+	}
+	if m.Claims == 0 {
+		t.Error("the crawl stored no claims")
+	}
+	if m.Requests == 0 || m.Spent[APIPlane.Name] != m.Requests {
+		t.Errorf("%d requests, spent %v, and none of them should be on arxiv.org", m.Requests, m.Spent)
+	}
+	if m.Spent[APIPlane.Name] > m.Budget[APIPlane.Name] {
+		t.Errorf("the crawl spent %d of a budget of %d", m.Spent[APIPlane.Name], m.Budget[APIPlane.Name])
+	}
+
+	// The paper is in the store as a record, and the store can say what it read
+	// to get there.
+	node, err := st.Node(graph.Paper("1706.03762"))
+	if err != nil || node == nil || !node.Read() {
+		t.Fatalf("the paper is not in the store: %v, %v", node, err)
+	}
+	reads, err := st.Reads(50)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reads) != m.Requests {
+		t.Errorf("the log has %d rows and the manifest counted %d", len(reads), m.Requests)
+	}
+	surfaces := map[string]int{}
+	for _, r := range reads {
+		if r.Plane != APIPlane.Name {
+			t.Errorf("%s went to the %s plane", r.URL, r.Plane)
+		}
+		surfaces[r.Surface]++
+	}
+	// Depth meta is s1 and s2, and the read log should name both.
+	for _, s := range []string{SurfaceAPI, SurfaceOAI} {
+		if surfaces[s] == 0 {
+			t.Errorf("nothing in the log came off %s", s)
+		}
+	}
+	// The authors it named are on the frontier now, unread, which is what makes
+	// the next run resumable.
+	front, err := st.Frontier(graph.KindName, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(front) == 0 {
+		t.Error("the crawl named no authors")
+	}
+	t.Logf("%s; %d names waiting; surfaces %v", m, len(front), surfaces)
+}
+
+// TestLiveCrawlResumesWhereItStopped runs the same store twice, the first time
+// with a budget too small to finish. What the second run does is the whole
+// point of the store: it picks up nodes the first run only heard of.
+func TestLiveCrawlResumesWhereItStopped(t *testing.T) {
+	c := liveClient(t)
+	path := filepath.Join(t.TempDir(), "arxiv.db")
+	st, err := OpenStore(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cr, err := NewCrawler(c, st, CrawlOptions{
+		Seeds: []string{"1706.03762"}, Hops: 1, Depth: DepthQuick,
+		Budget: 2, APIOnly: true, Progress: t.Logf,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cr.Run(context.Background()); err != nil {
+		t.Fatalf("first crawl: %v", err)
+	}
+	_ = st.Close()
+
+	st2, err := OpenStore(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = st2.Close() }()
+	cr2, err := NewCrawler(c, st2, CrawlOptions{
+		Resume: true, Hops: 1, Depth: DepthQuick, Budget: 4,
+		Names: true, Limit: 5, APIOnly: true, Progress: t.Logf,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	m2, err := cr2.Run(context.Background())
+	if err != nil {
+		t.Fatalf("second crawl: %v", err)
+	}
+	if m2.Searches == 0 {
+		t.Error("the resumed crawl followed no names off the store's frontier")
+	}
+	if m2.Papers != 0 {
+		t.Errorf("the resumed crawl read %d papers, and the first run had already read the only one", m2.Papers)
+	}
+	t.Logf("resumed: %s", m2)
+}
+
+// TestLiveArchiveWritesEverySurface reads one paper's surfaces and checks what
+// landed on disk. Four of them are on arxiv.org at fifteen seconds each, so
+// this one takes about a minute.
+func TestLiveArchiveWritesEverySurface(t *testing.T) {
+	c := liveClient(t)
+	dir := t.TempDir()
+	a, err := c.Archive(context.Background(), "1706.03762", ArchiveOptions{Dir: dir, Progress: t.Logf})
+	if err != nil {
+		t.Fatalf("archive: %v", err)
+	}
+	if a.Files < 5 {
+		t.Errorf("the archive wrote %d files", a.Files)
+	}
+
+	// Every surface meta.json names is on disk, at the size and the hash it
+	// says. This is the promise the whole command exists to make.
+	for _, f := range a.Surfaces {
+		if f.Error != "" {
+			t.Logf("%s: %s", f.Surface, f.Error)
+			continue
+		}
+		blob, err := os.ReadFile(filepath.Join(a.Dir, f.Name))
+		if err != nil {
+			t.Errorf("%s is in meta.json and not on disk: %v", f.Name, err)
+			continue
+		}
+		if int64(len(blob)) != f.Bytes {
+			t.Errorf("%s is %d bytes on disk and %d in meta.json", f.Name, len(blob), f.Bytes)
+		}
+		sum := sha256.Sum256(blob)
+		if hex.EncodeToString(sum[:]) != f.SHA256 {
+			t.Errorf("%s does not hash to what meta.json says", f.Name)
+		}
+		if f.Status != 200 {
+			t.Errorf("%s was written from a %d", f.Name, f.Status)
+		}
+	}
+	for _, name := range []string{"s1-api.xml", "s2-oai-arxiv.xml", "s2-oai-arxivraw.xml", "s3-abs.html", "s9-bibtex.bib", "record.json", "meta.json"} {
+		if _, err := os.Stat(filepath.Join(a.Dir, name)); err != nil {
+			t.Errorf("%s is missing: %v", name, err)
+		}
+	}
+
+	// record.json is built from the bytes beside it, so it should carry
+	// everything those surfaces have: the version table is arXivRaw's, and the
+	// full text links are the abstract page's.
+	blob, err := os.ReadFile(filepath.Join(a.Dir, "record.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var p Paper
+	if err := json.Unmarshal(blob, &p); err != nil {
+		t.Fatalf("record.json does not decode: %v", err)
+	}
+	// Eight authors on the feed, and the rendering may add one more: a name it
+	// spells differently enough that the slug does not match is kept rather
+	// than dropped, with its affiliation on it.
+	if p.ID != "1706.03762" || p.Title == "" || len(p.Authors) < 8 {
+		t.Errorf("record.json is %s %q with %d authors", p.ID, p.Title, len(p.Authors))
+	}
+	if len(p.Versions) < 5 {
+		t.Errorf("record.json has %d versions, so arXivRaw did not make it in", len(p.Versions))
+	}
+	if p.Depth != string(DepthText) {
+		t.Errorf("record.json says depth %q", p.Depth)
+	}
+	t.Logf("%s; missing %v", a, a.Missing)
+}
+
+// TestLiveArchiveOfAPaperThatIsNotThere stops at s1, because the one surface an
+// archive cannot do without is the one that says the paper exists. Nothing is
+// written after it, so there is no record.json describing a paper arXiv has
+// never heard of.
+func TestLiveArchiveOfAPaperThatIsNotThere(t *testing.T) {
+	c := liveClient(t)
+	dir := t.TempDir()
+	const id = "2401.99999" // shaped like an id, and not one arXiv has
+	if _, err := c.Archive(context.Background(), id, ArchiveOptions{Dir: dir, Progress: t.Logf}); err == nil {
+		t.Fatal("a paper that is not there was archived")
+	}
+	for _, name := range []string{"record.json", "meta.json", "s3-abs.html"} {
+		if _, err := os.Stat(filepath.Join(dir, id, name)); err == nil {
+			t.Errorf("%s was written for a paper arXiv does not have", name)
+		}
+	}
 }
