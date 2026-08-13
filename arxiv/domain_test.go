@@ -43,3 +43,39 @@ func TestHostWiring(t *testing.T) {
 		t.Errorf("arxiv domain not registered; got %v", domains)
 	}
 }
+
+// TestDomainRegisters walks the app the binary builds and checks that every
+// read the tool advertises is there, in the read group, and not marked as a
+// write. arXiv is a read-only surface and nothing here should ever change that.
+func TestDomainRegisters(t *testing.T) {
+	app := kit.New(kit.Identity{Binary: "arxiv", Version: "test"})
+	(Domain{}).Register(app)
+
+	want := map[string]bool{
+		"search":     false,
+		"paper":      false,
+		"author":     false,
+		"categories": false,
+	}
+	for _, op := range app.Ops() {
+		if _, ok := want[op.Meta().Name]; !ok {
+			t.Errorf("unexpected op %q", op.Meta().Name)
+			continue
+		}
+		want[op.Meta().Name] = true
+		if op.Meta().Group != "read" {
+			t.Errorf("op %q is in group %q, want read", op.Meta().Name, op.Meta().Group)
+		}
+		if op.Meta().Write {
+			t.Errorf("op %q is marked as a write; arXiv is read only", op.Meta().Name)
+		}
+		if op.Meta().Summary == "" {
+			t.Errorf("op %q has no summary", op.Meta().Name)
+		}
+	}
+	for name, seen := range want {
+		if !seen {
+			t.Errorf("op %q was not registered", name)
+		}
+	}
+}

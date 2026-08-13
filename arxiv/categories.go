@@ -1,12 +1,12 @@
-package cli
+package arxiv
 
-import (
-	"github.com/spf13/cobra"
-	"github.com/tamnd/arxiv-cli/arxiv"
-)
-
-// commonCategories is the static list of the most-used arXiv category codes.
-var commonCategories = []arxiv.Category{
+// commonCategories is a static subset of the arXiv category codes.
+//
+// arXiv publishes all 155 of them, with descriptions, at
+// https://arxiv.org/category_taxonomy. Reading that page is milestone 7 of the
+// rewrite; until it lands this list is what `arxiv categories` prints, and it
+// is a fifth of the real thing.
+var commonCategories = []Category{
 	{Code: "cs.AI", Description: "Artificial Intelligence"},
 	{Code: "cs.CL", Description: "Computation and Language"},
 	{Code: "cs.CV", Description: "Computer Vision and Pattern Recognition"},
@@ -34,18 +34,14 @@ var commonCategories = []arxiv.Category{
 	{Code: "q-bio.QM", Description: "Quantitative Methods"},
 	{Code: "quant-ph", Description: "Quantum Physics"},
 	{Code: "stat.AP", Description: "Applications"},
-	{Code: "stat.ML", Description: "Machine Learning (Statistics)"},
 	{Code: "stat.ME", Description: "Methodology"},
+	{Code: "stat.ML", Description: "Machine Learning (Statistics)"},
 	{Code: "stat.TH", Description: "Statistics Theory (alias for math.ST)"},
 }
 
-func (a *App) categoriesCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "categories",
-		Short: "List common arXiv category codes",
-		Long:  "Print the most-used arXiv category codes. No network call.",
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			return a.render(commonCategories)
-		},
-	}
+// CommonCategories returns the category codes the tool knows about.
+func CommonCategories() []Category {
+	out := make([]Category, len(commonCategories))
+	copy(out, commonCategories)
+	return out
 }
