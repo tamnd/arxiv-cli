@@ -711,3 +711,73 @@ func TestLiveFeedFilter(t *testing.T) {
 		}
 	}
 }
+
+// TestLiveAuthorIdentifierPage reads a page that has been there for years and
+// checks the two facts the command claims: the redirect from the unsuffixed
+// form, and the ORCID.
+func TestLiveAuthorIdentifierPage(t *testing.T) {
+	c := liveClient(t)
+	p, err := c.AuthorByID(context.Background(), "baez_j_1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.Identified || p.ORCID == "" || p.ArxivID != "baez_j_1" {
+		t.Errorf("identity: %+v", p)
+	}
+	if len(p.Papers) < 100 {
+		t.Errorf("%d papers on the page", len(p.Papers))
+	}
+	if p.URI != AuthorURI("baez_j_1") || p.IdentifiedAs != NameURI(p.Name) {
+		t.Errorf("uris: %q %q", p.URI, p.IdentifiedAs)
+	}
+	t.Logf("%s, orcid %s, %d papers", p.Name, p.ORCID, len(p.Papers))
+}
+
+// TestLiveAuthorPageRedirects checks that the unsuffixed form still goes where
+// the suffixed one is asked for, which is the reason the tool asks for the
+// suffixed one directly.
+func TestLiveAuthorPageRedirects(t *testing.T) {
+	c := liveClient(t)
+	resp, err := c.fetch(context.Background(), "https://arxiv.org/a/baez_j_1", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	page, err := parseAuthorPage(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if page.ORCID == "" || len(page.Rows) == 0 {
+		t.Errorf("the unsuffixed form did not land on the page: %+v", page.Name)
+	}
+}
+
+// TestLiveAuthorPageIsOptIn: a well known author with no registered page still
+// answers 404, and the message has to say what that means.
+func TestLiveAuthorPageIsOptIn(t *testing.T) {
+	_, err := liveClient(t).AuthorByID(context.Background(), "hinton_g_1")
+	if err == nil {
+		t.Skip("hinton_g_1 has registered a page since this was written")
+	}
+	if !strings.Contains(err.Error(), "opt-in") {
+		t.Errorf("got %v", err)
+	}
+}
+
+// TestLiveAuthorNameSearchIsNotAPerson checks the other half of the pair: a
+// name search says so, and carries no ORCID to pretend otherwise.
+func TestLiveAuthorNameSearchIsNotAPerson(t *testing.T) {
+	p, err := liveClient(t).AuthorByName(context.Background(), "John Baez", 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Identified || p.ORCID != "" || p.ArxivID != "" {
+		t.Errorf("a name search claimed a person: %+v", p)
+	}
+	if p.PaperCount < len(p.Papers) || len(p.Papers) != 5 {
+		t.Errorf("%d papers of %d", len(p.Papers), p.PaperCount)
+	}
+	if p.Warning == "" {
+		t.Error("no warning on a name match")
+	}
+	t.Logf("%d papers match the name", p.PaperCount)
+}

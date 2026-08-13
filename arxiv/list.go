@@ -158,7 +158,7 @@ func (c *Client) ListStream(ctx context.Context, o ListOptions, emit func(*Paper
 		}
 		at := c.now()
 		for i := range page.Rows {
-			paper := listToPaper(page.Rows[i], u, at)
+			paper := listToPaper(page.Rows[i], SurfaceList, u, at)
 			c.noteUnknownCategories(paper.Categories...)
 			if err := emit(&paper); err != nil {
 				return err
@@ -441,7 +441,11 @@ func absoluteURL(href string) string {
 }
 
 // listToPaper maps a row onto the record every other surface also produces.
-func listToPaper(r listRow, source string, at time.Time) Paper {
+//
+// The surface is a parameter because two pages publish this exact row shape: the
+// category listing and the author identifier page. A record that said s4 when it
+// came off an author page would be a lie about where to go and look again.
+func listToPaper(r listRow, surface, source string, at time.Time) Paper {
 	p := Paper{
 		Envelope: Envelope{
 			Kind:        "paper",
@@ -466,7 +470,7 @@ func listToPaper(r listRow, source string, at time.Time) Paper {
 		Extra:    r.Extra,
 		Depth:    string(DepthQuick),
 	}
-	p.addSurface(SurfaceList, source)
+	p.addSurface(surface, source)
 
 	if id, err := axid.Parse(r.ID); err == nil {
 		p.Style = string(id.Style)
@@ -483,7 +487,7 @@ func listToPaper(r listRow, source string, at time.Time) Paper {
 	}
 
 	for _, name := range r.Authors {
-		p.Authors = append(p.Authors, Author{Name: name, Via: SurfaceList})
+		p.Authors = append(p.Authors, Author{Name: name, Via: surface})
 	}
 	p.AuthorLine = authorLine(p.Authors)
 
@@ -495,8 +499,8 @@ func listToPaper(r listRow, source string, at time.Time) Paper {
 		}
 		p.CrossLists = crossLists(p.Categories, p.PrimaryCategory)
 		p.SubjectNames = r.SubjectNames
-		p.setVia("categories", SurfaceList)
-		p.setVia("subject_names", SurfaceList)
+		p.setVia("categories", surface)
+		p.setVia("subject_names", surface)
 	}
 
 	// The recent listing groups its rows under the day they were announced,
@@ -505,7 +509,7 @@ func listToPaper(r listRow, source string, at time.Time) Paper {
 	// when the paper was registered, so nothing is claimed about it here.
 	if !r.Announced.IsZero() {
 		p.Announced = r.Announced
-		p.setVia("announced", SurfaceList)
+		p.setVia("announced", surface)
 	}
 
 	for field, value := range map[string]string{
@@ -515,7 +519,7 @@ func listToPaper(r listRow, source string, at time.Time) Paper {
 		"report_no":   p.ReportNo,
 	} {
 		if value != "" {
-			p.setVia(field, SurfaceList)
+			p.setVia(field, surface)
 		}
 	}
 

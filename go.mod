@@ -2,11 +2,14 @@ module github.com/tamnd/arxiv-cli
 
 go 1.26.5
 
-require github.com/tamnd/any-cli v0.4.12
+require (
+	github.com/PuerkitoBio/goquery v1.12.0
+	github.com/tamnd/any-cli v0.4.12
+	golang.org/x/text v0.39.0
+)
 
 require (
 	charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251106193318-19329a3e8410 // indirect
-	github.com/PuerkitoBio/goquery v1.12.0 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/charmbracelet/colorprofile v0.3.3 // indirect
 	github.com/charmbracelet/fang v1.0.0 // indirect
@@ -39,7 +42,6 @@ require (
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.39.0 // indirect
 	modernc.org/libc v1.72.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
