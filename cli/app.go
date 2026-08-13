@@ -40,6 +40,12 @@ arxiv is an independent tool and is not affiliated with arXiv or Cornell Univers
 	}, kit.WithDefaults(defaults(def)))
 
 	(arxiv.Domain{}).Register(app)
+	for _, cmd := range storeCommands() {
+		app.AddCommand(cmd)
+	}
+	for _, cmd := range crawlCommands() {
+		app.AddCommand(cmd)
+	}
 	app.AddCommand(newVersionCmd())
 	return app
 }
