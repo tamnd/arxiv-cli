@@ -81,6 +81,9 @@ type Client struct {
 	log     io.Writer
 
 	sleep func(context.Context, time.Duration) error
+	// now stamps a record's retrieved_at. It is a field so a golden test can
+	// pin a timestamp without pinning the day it ran.
+	now func() time.Time
 }
 
 // NewClient builds a client from cfg.
@@ -120,6 +123,7 @@ func NewClient(cfg Config) (*Client, error) {
 		verbose: cfg.Verbose,
 		log:     cfg.Log,
 		sleep:   sleepCtx,
+		now:     time.Now,
 	}
 	return c, nil
 }
@@ -142,43 +146,24 @@ func (c *Client) Search(ctx context.Context, opts SearchOptions) ([]Paper, error
 	if err != nil {
 		return nil, errs.Usage("%s", err.Error())
 	}
-	feed, err := c.Do(ctx, Request{
+	return c.searchPapers(ctx, Request{
 		Query: buildQuery(opts.Query, opts.Category),
 		Max:   limit,
 		Sort:  sort,
 		Order: Descending,
-	}, TTLSearch)
-	if err != nil {
-		return nil, err
-	}
-	return feedToPapers(feed), nil
+	})
 }
 
-// Paper fetches the single paper with the given id. The id must be canonical:
-// no version, no subject class. Returns ErrNotFound for an empty result.
+// Paper fetches the single paper with the given id at depth quick. PaperAt is
+// the one to reach for when the extra surfaces are wanted.
 func (c *Client) Paper(ctx context.Context, id string) (Paper, error) {
-	feed, err := c.Do(ctx, Request{IDs: []string{id}, Max: 1}, TTLPaper)
-	if err != nil {
-		return Paper{}, err
-	}
-	if len(feed.Entries) == 0 {
-		return Paper{}, fmt.Errorf("%s: %w", id, ErrNotFound)
-	}
-	return entryToPaper(feed.Entries[0]), nil
+	return c.PaperAt(ctx, id, PaperOptions{Depth: DepthQuick})
 }
 
 // Papers fetches many papers in one request per batch, which is by far the
 // cheapest way to hydrate a list of known ids.
 func (c *Client) Papers(ctx context.Context, ids []string) ([]Paper, error) {
-	var out []Paper
-	for _, batch := range BatchIDs(ids) {
-		feed, err := c.Do(ctx, Request{IDs: batch, Max: len(batch)}, TTLPaper)
-		if err != nil {
-			return out, err
-		}
-		out = append(out, feedToPapers(feed)...)
-	}
-	return out, nil
+	return c.PapersAt(ctx, ids, PaperOptions{Depth: DepthQuick})
 }
 
 // SearchByAuthor returns up to n papers whose author field matches name,
@@ -187,16 +172,33 @@ func (c *Client) SearchByAuthor(ctx context.Context, name string, n int) ([]Pape
 	if n <= 0 {
 		n = 10
 	}
-	feed, err := c.Do(ctx, Request{
+	return c.searchPapers(ctx, Request{
 		Query: Term(FieldAuthor, name),
 		Max:   n,
 		Sort:  SortSubmitted,
 		Order: Descending,
-	}, TTLSearch)
+	})
+}
+
+// searchPapers runs one search request and maps the feed to records.
+//
+// The request URL goes onto every record it produced, because a search result
+// that cannot be reproduced by hand is a result you have to take on trust.
+func (c *Client) searchPapers(ctx context.Context, req Request) ([]Paper, error) {
+	u, err := req.URL()
 	if err != nil {
 		return nil, err
 	}
-	return feedToPapers(feed), nil
+	feed, err := c.getXML(ctx, u, TTLSearch)
+	if err != nil {
+		return nil, err
+	}
+	at := c.now()
+	out := make([]Paper, 0, len(feed.Entries))
+	for _, e := range feed.Entries {
+		out = append(out, entryToPaper(e, u, at))
+	}
+	return out, nil
 }
 
 // Count returns how many results a query has, which is the number the slicer
@@ -237,14 +239,6 @@ func buildQuery(query, category string) Query {
 		terms = append(terms, Term(FieldCategory, category))
 	}
 	return And(terms...)
-}
-
-func feedToPapers(feed *atomFeed) []Paper {
-	out := make([]Paper, 0, len(feed.Entries))
-	for _, e := range feed.Entries {
-		out = append(out, entryToPaper(e))
-	}
-	return out
 }
 
 // getXML fetches a URL and decodes the Atom feed, including the error feed

@@ -1,5 +1,12 @@
 package arxiv
 
+// Category is the record `arxiv categories` prints. The taxonomy read that
+// fills in the group, the archive and the set spec is milestone 9.
+type Category struct {
+	Code        string `json:"code" kit:"id" table:"code"`
+	Description string `json:"description" table:"description"`
+}
+
 // commonCategories is a static subset of the arXiv category codes.
 //
 // arXiv publishes all 155 of them, with descriptions, at
