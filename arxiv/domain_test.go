@@ -55,8 +55,9 @@ func TestDomainRegisters(t *testing.T) {
 	app := kit.New(kit.Identity{Binary: "arxiv", Version: "test"})
 	(Domain{}).Register(app)
 
-	// name to the group it belongs in. read means it talks to arXiv, explain
-	// means it answers from what the tool already knows.
+	// name to the group it belongs in. read means it talks to arXiv, graph
+	// means it turns a read into claims, explain means it answers from what the
+	// tool already knows.
 	groups := map[string]string{
 		"search":     "read",
 		"count":      "read",
@@ -71,6 +72,8 @@ func TestDomainRegisters(t *testing.T) {
 		"trackbacks": "read",
 		"files":      "read",
 		"download":   "read",
+		"edges":      "graph",
+		"graph":      "graph",
 		"bibtex":     "cite",
 		"cite":       "cite",
 		"id":         "explain",

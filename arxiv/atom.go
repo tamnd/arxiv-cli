@@ -190,6 +190,9 @@ func parseAtomTime(s string) (time.Time, bool) {
 	return t.UTC(), true
 }
 
+// absBase is the abstract page, which is s3.
+const absBase = "https://" + Host + "/abs/"
+
 // absURL and pdfURL are the canonical links for a bare id.
-func absURL(id string) string { return "https://" + Host + "/abs/" + id }
+func absURL(id string) string { return absBase + id }
 func pdfURL(id string) string { return "https://" + Host + "/pdf/" + id }
