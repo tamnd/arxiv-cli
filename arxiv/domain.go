@@ -48,6 +48,7 @@ func (Domain) Register(app *kit.App) {
 	registerPaper(app)
 	registerAuthor(app)
 	registerCategories(app)
+	registerID(app)
 }
 
 // newClient is the factory kit calls once per run. An unset framework flag
