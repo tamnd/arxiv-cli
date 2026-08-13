@@ -55,6 +55,7 @@ func TestDomainRegisters(t *testing.T) {
 	// means it answers from what the tool already knows.
 	groups := map[string]string{
 		"search":     "read",
+		"count":      "read",
 		"paper":      "read",
 		"author":     "read",
 		"categories": "read",

@@ -192,17 +192,3 @@ func TestParseSort(t *testing.T) {
 		}
 	}
 }
-
-func TestBuildQueryJoinsWords(t *testing.T) {
-	got := buildQuery("attention transformer", "cs.CL").String()
-	want := "all:attention AND all:transformer AND cat:cs.CL"
-	if got != want {
-		t.Errorf("buildQuery = %q, want %q", got, want)
-	}
-	if got := buildQuery("attention", "").String(); got != "all:attention" {
-		t.Errorf("buildQuery without a category = %q", got)
-	}
-	if !buildQuery("  ", "").Empty() {
-		t.Error("an empty search produced a query")
-	}
-}

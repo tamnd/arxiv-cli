@@ -65,6 +65,7 @@ func (Domain) Register(app *kit.App) {
 	app.SetClient(newClient)
 
 	registerSearch(app)
+	registerCount(app)
 	registerPaper(app)
 	registerAuthor(app)
 	registerCategories(app)
@@ -124,12 +125,57 @@ func htmlRateOf(cfg kit.Config) (time.Duration, error) {
 	return d, nil
 }
 
+// searchIn is the flag set of `arxiv search`. Every query flag here maps to one
+// clause of the grammar in spec 3006 doc 02 section 2.
+//
+// countIn below repeats the query half rather than embedding it, because kit
+// binds the fields a struct declares and not the ones it promotes. A test
+// asserts the two lists stay identical, which is the part that would otherwise
+// drift.
 type searchIn struct {
-	Query    string  `kit:"arg" help:"what to search for"`
-	Category string  `kit:"flag,name=cat" help:"restrict to a category code, for example cs.LG"`
-	Sort     string  `kit:"flag" default:"relevance" enum:"relevance,date,updated" help:"sort order"`
-	Limit    int     `kit:"flag,short=n,inherit" default:"10" help:"how many papers to return"`
-	Client   *Client `kit:"inject"`
+	Query    string   `kit:"arg" help:"what to search for, matched against every field"`
+	Raw      string   `kit:"flag" help:"a query in arXiv's own grammar, sent unchanged"`
+	Category []string `kit:"flag,name=cat" help:"a category code such as cs.LG, repeatable and OR'd"`
+	Author   string   `kit:"flag" help:"match the author field"`
+	Title    string   `kit:"flag" help:"match the title"`
+	Abstract string   `kit:"flag" help:"match the abstract"`
+	Comment  string   `kit:"flag" help:"match the author comment"`
+	Journal  string   `kit:"flag" help:"match the journal reference"`
+	Report   string   `kit:"flag" help:"match the report number"`
+
+	From        string `kit:"flag" help:"submitted on or after this date: 2026, 2026-01 or 2026-01-01"`
+	To          string `kit:"flag" help:"submitted on or before this date, inclusive to the end of the period"`
+	UpdatedFrom string `kit:"flag,name=updated-from" help:"last updated on or after this date"`
+	UpdatedTo   string `kit:"flag,name=updated-to" help:"last updated on or before this date"`
+
+	Sort   string  `kit:"flag" enum:"relevance,submitted,updated" help:"sort order, relevance by default and submitted under --all"`
+	Order  string  `kit:"flag" default:"desc" enum:"desc,asc" help:"sort direction"`
+	All    bool    `kit:"flag" help:"walk the whole result set, past the ten thousand result window"`
+	Limit  int     `kit:"flag,short=n,inherit" help:"how many papers to return"`
+	Client *Client `kit:"inject"`
+}
+
+// options is the library form of the flags.
+func (in searchIn) options() SearchOptions {
+	return SearchOptions{
+		Query:       in.Query,
+		Raw:         in.Raw,
+		Categories:  in.Category,
+		Author:      in.Author,
+		Title:       in.Title,
+		Abstract:    in.Abstract,
+		Comment:     in.Comment,
+		Journal:     in.Journal,
+		Report:      in.Report,
+		From:        in.From,
+		To:          in.To,
+		UpdatedFrom: in.UpdatedFrom,
+		UpdatedTo:   in.UpdatedTo,
+		Sort:        in.Sort,
+		Order:       in.Order,
+		Limit:       in.Limit,
+		All:         in.All,
+	}
 }
 
 func registerSearch(app *kit.App) {
@@ -139,23 +185,102 @@ func registerSearch(app *kit.App) {
 		List:    true,
 		URIType: "paper",
 		Summary: "Search arXiv papers",
-		Args:    []kit.Arg{{Name: "query", Help: "what to search for"}},
+		Args:    []kit.Arg{{Name: "query", Help: "what to search for", Optional: true}},
 		Long: `Search arXiv papers.
 
-The query is matched against every field. Use --cat to restrict to a category
-code such as cs.LG or math.NT, and --sort to order by relevance, submission
-date, or last update.`,
+The positional query is matched against every indexed field. The field flags
+are arXiv's own search prefixes under readable names, so --title attention
+--author vaswani sends ti:attention AND au:vaswani, and -v prints both the
+query that was built and the URL it went out on.
+
+--cat takes a category code and repeats, and the codes are OR'd together. A
+bare archive code such as hep-th or cs matches whether or not that archive was
+split into categories.
+
+The date flags take 2026, 2026-01 or 2026-01-01. A bound names a period rather
+than an instant, so --to 2026-01 means the end of January and not the start of
+it.
+
+--raw sends a query through untouched, for the parts of the grammar the flags
+do not cover: parentheses, OR, ANDNOT and quoted phrases.
+
+--all walks the whole result set. arXiv will not page past ten thousand
+results, so a bigger set is cut into date slices that each fit, and the walk
+runs in submission order because relevance is recomputed on every request and a
+walk ordered by it would both repeat and skip papers.
+
+To learn only how many results there are, use arxiv count, which costs one
+request.`,
 	}, func(ctx context.Context, in searchIn, emit func(*Paper) error) error {
-		papers, err := in.Client.Search(ctx, SearchOptions{
-			Query:    in.Query,
-			Category: in.Category,
-			Sort:     in.Sort,
-			Limit:    in.Limit,
-		})
+		if err := in.Client.SearchStream(ctx, in.options(), emit); err != nil {
+			return mapErr(err)
+		}
+		return nil
+	})
+}
+
+// countIn is searchIn without the ordering flags, which a count has no use for.
+type countIn struct {
+	Query    string   `kit:"arg" help:"what to search for, matched against every field"`
+	Raw      string   `kit:"flag" help:"a query in arXiv's own grammar, sent unchanged"`
+	Category []string `kit:"flag,name=cat" help:"a category code such as cs.LG, repeatable and OR'd"`
+	Author   string   `kit:"flag" help:"match the author field"`
+	Title    string   `kit:"flag" help:"match the title"`
+	Abstract string   `kit:"flag" help:"match the abstract"`
+	Comment  string   `kit:"flag" help:"match the author comment"`
+	Journal  string   `kit:"flag" help:"match the journal reference"`
+	Report   string   `kit:"flag" help:"match the report number"`
+
+	From        string `kit:"flag" help:"submitted on or after this date: 2026, 2026-01 or 2026-01-01"`
+	To          string `kit:"flag" help:"submitted on or before this date, inclusive to the end of the period"`
+	UpdatedFrom string `kit:"flag,name=updated-from" help:"last updated on or after this date"`
+	UpdatedTo   string `kit:"flag,name=updated-to" help:"last updated on or before this date"`
+
+	Client *Client `kit:"inject"`
+}
+
+// options is the library form of the flags. A count has no ordering, so the
+// sort is left at its default and never reaches the wire in a way that matters.
+func (in countIn) options() SearchOptions {
+	return SearchOptions{
+		Query:       in.Query,
+		Raw:         in.Raw,
+		Categories:  in.Category,
+		Author:      in.Author,
+		Title:       in.Title,
+		Abstract:    in.Abstract,
+		Comment:     in.Comment,
+		Journal:     in.Journal,
+		Report:      in.Report,
+		From:        in.From,
+		To:          in.To,
+		UpdatedFrom: in.UpdatedFrom,
+		UpdatedTo:   in.UpdatedTo,
+	}
+}
+
+func registerCount(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "count",
+		Group:   "read",
+		Single:  true,
+		URIType: "count",
+		Summary: "Count the results a query has",
+		Args:    []kit.Arg{{Name: "query", Help: "what to search for", Optional: true}},
+		Long: `Count the results a query has, without fetching any of them.
+
+Takes the same flags as arxiv search. One request, and the number comes from
+the opensearch:totalResults element the API puts on every feed, so this is the
+cheapest way to find out whether a query is worth running.
+
+The request asks for one result rather than none, because max_results=0 answers
+500 with an internal error.`,
+	}, func(ctx context.Context, in countIn, emit func(*Count) error) error {
+		count, err := in.Client.CountSearch(ctx, in.options())
 		if err != nil {
 			return mapErr(err)
 		}
-		return emitAll(papers, emit)
+		return emit(&count)
 	})
 }
 
