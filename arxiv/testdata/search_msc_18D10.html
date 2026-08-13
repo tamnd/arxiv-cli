@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!-- new favicon config and versions by realfavicongenerator.net -->
+<link rel="apple-touch-icon" sizes="180x180" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/favicon-16x16.png">
+<link rel="manifest" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/site.webmanifest">
+<link rel="mask-icon" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/safari-pinned-tab.svg" color="#b31b1b">
+<link rel="shortcut icon" href="https://static.arxiv.org/static/base/1.0.0a5/images/icons/favicon.ico">
+<meta name="msapplication-TileColor" content="#b31b1b">
+<meta name="msapplication-config" content="images/icons/browserconfig.xml">
+<meta name="theme-color" content="#b31b1b">
+<!-- end favicon config -->
+<title>Search | arXiv e-print repository</title>
+<script defer src="https://static.arxiv.org/static/base/1.0.0a5/fontawesome-free-5.11.2-web/js/all.js"></script>
+<link rel="stylesheet" href="https://static.arxiv.org/static/base/1.0.0a5/css/arxivstyle.css" />
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    messageStyle: "none",
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true,
+      ignoreClass: '.*',
+      processClass: 'mathjax.*'
+    },
+    TeX: {
+        extensions: ["AMSmath.js", "AMSsymbols.js", "noErrors.js"],
+        noErrors: {
+          inlineDelimiters: ["$","$"],
+          multiLine: false,
+          style: {
+            "font-size": "normal",
+            "border": ""
+          }
+        }
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+<script src='//static.arxiv.org/MathJax-2.7.3/MathJax.js'></script>
+<script src="https://static.arxiv.org/static/base/1.0.0a5/js/notification.js"></script>
+
+    
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" type="text/css" media="screen" href="https://static.arxiv.org/static/base/1.0.1/css/arxiv-header-footer.css?v=20260626" />
+  <script defer src="https://static.arxiv.org/static/base/1.0.1/js/arxiv-header.js?v=20260626"></script>
+  <link rel="stylesheet" href="https://static.arxiv.org/static/search/0.5.6/css/bulma-tooltip.min.css" />
+  <link rel="stylesheet" href="https://static.arxiv.org/static/search/0.5.6/css/search.css" />
+  <script
+    src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g="
+    crossorigin="anonymous"></script>
+
+  <script src="https://static.arxiv.org/static/search/0.5.6/js/fieldset.js"></script>
+  <style>
+  radio#cf-customfield_11400 {
+    display: none;
+  }
+  /* Render the spinout .ds-site-footer standalone / full-bleed. search extends the
+     legacy base, whose bare wrapping <footer> (in base/base.html, outside any
+     overridable block — so it can't be removed from here) is styled by
+     arxivstyle.css with a grey background (hsl(0,0%,95%)) + 1em 2em padding,
+     boxing our warm-wash footer inside a second grey band. display:contents drops
+     the wrapper's box entirely (cleaner than zeroing individual properties) so
+     .ds-site-footer renders in its place; it inherits flex-shrink:0 from the same
+     legacy `footer` rule, so the sticky footer still works. Search-specific
+     legacy-base integration; the shared chrome CSS stays byte-identical to the SSOT. */
+  body > footer {
+    display: contents;
+  }
+  </style>
+
+  </head>
+  <body>
+  
+  
+  <header><a href="#main-container" class="is-sr-only">Skip to main content</a>
+    <div class="ds-announcement" id="announcement-banner" role="region" aria-label="Announcement" data-banner-name="spinout-nonprofit">
+  <img class="ds-announcement-glyph" src="https://static.arxiv.org/static/base/1.0.1/images/icons/smileybones-small.svg" alt="" aria-hidden="true">
+  <span class="ds-announcement-text">arXiv is now an independent nonprofit!</span>
+  <a class="ds-announcement-link" href="https://info.arxiv.org/about">Learn more</a>
+  <button type="button" class="ds-announcement-close" aria-label="Dismiss announcement">&times;</button>
+</div>
+<header class="ds-site-header">
+  <a href="https://arxiv.org/" class="ds-site-header-logo" aria-label="archive home">
+    <img src="https://static.arxiv.org/static/base/1.0.1/images/arxiv-logo-primary-light.svg" alt="archive">
+  </a>
+  <button type="button" id="ds-nav-toggle" class="ds-site-header-nav-toggle"
+    aria-label="Open menu" aria-controls="ds-site-header-nav" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <nav class="ds-site-header-nav" id="ds-site-header-nav" aria-label="Main navigation">
+    <a id="arxiv-search-toggle" href="/search" aria-controls="arxiv-search-overlay" aria-expanded="false">
+      <svg class="ds-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      Search
+    </a>
+    <a href="https://arxiv.org/user/create">Submit</a>
+    <a href="https://info.arxiv.org/about/donate.html">Donate</a>
+    <span class="ds-site-header-divider" aria-hidden="true"></span>
+    <a href="https://arxiv.org/login" class="ds-site-header-login">Log in</a>
+  </nav>
+</header>
+
+<div class="arxiv-search-overlay" id="arxiv-search-overlay" hidden>
+  <div class="arxiv-search-panel" role="search">
+    <form method="GET" action="/search">
+      <label for="arxiv-search-input" class="is-sr-only">Search arXiv</label>
+      <input type="text" name="query" id="arxiv-search-input" autocomplete="off"
+        placeholder="Search papers by title, author, abstract, or ID...">
+      <input type="hidden" name="searchtype" value="all">
+      <input type="hidden" name="source" value="header">
+    </form>
+    <div class="arxiv-search-hint">
+      Press Enter to search &middot; <a href="/search/advanced">Advanced search</a>
+    </div>
+  </div>
+</div>
+
+  </header>
+  <main class="container" id="main-container">
+    
+
+
+    
+  <div class="level is-marginless">
+    <div class="level-left">
+      <h1 class="title is-clearfix">
+    
+        Showing 1&ndash;25 of 723 results for msc_class: <span class="mathjax">18D10</span>
+    
+</h1>
+    </div>
+    <div class="level-right is-hidden-mobile">
+      <!-- feedback for mobile is moved to footer -->
+      <span class="help" style="display: inline-block;"><a href="https://github.com/arXiv/arxiv-search/releases">Search v0.5.6 released 2020-02-24</a>&nbsp;&nbsp;</span>
+    </div>
+  </div>
+    <div class="content">
+      
+  <form method="GET" action="/search/"  aria-role="search">
+    
+
+    
+    <div class="field has-addons-tablet">
+      <div class="control is-expanded">
+        <label for="query" class="hidden-label">Search term or terms</label>
+        
+          <input class="input is-medium" id="query" name="query" placeholder="Search term..." type="text" value="18D10">
+        
+        
+      </div>
+      <div class="select control is-medium">
+        <label class="is-hidden" for="searchtype">Field</label>
+        <select class="is-medium" id="searchtype" name="searchtype"><option value="all">All fields</option><option value="title">Title</option><option value="author">Author(s)</option><option value="abstract">Abstract</option><option value="comments">Comments</option><option value="journal_ref">Journal reference</option><option value="acm_class">ACM classification</option><option selected value="msc_class">MSC classification</option><option value="report_num">Report number</option><option value="paper_id">arXiv identifier</option><option value="doi">DOI</option><option value="orcid">ORCID</option><option value="license">License (URI)</option><option value="author_id">arXiv author ID</option><option value="help">Help pages</option><option value="full_text">Full text</option></select>
+      </div>
+      <div class="control">
+          <button class="button is-link is-medium">Search</button>
+      </div>
+    </div>
+    <div class="field">
+      <div class="control is-size-7">
+        
+        <label class="radio">
+          <input checked id="abstracts-0" name="abstracts" type="radio" value="show"> Show abstracts
+        </label>
+        
+        <label class="radio">
+          <input id="abstracts-1" name="abstracts" type="radio" value="hide"> Hide abstracts
+        </label>
+        
+      </div>
+    </div>
+    <div class="is-clearfix" style="height: 2.5em"> 
+      <div class="is-pulled-right">
+        
+        <a href="/search/advanced?terms-0-term=18D10&amp;terms-0-field=msc_class&amp;size=25&amp;order=-announced_date_first">Advanced Search</a>
+        
+      </div>
+    </div>
+    <input type="hidden" name="order" value="-announced_date_first">
+    <input type="hidden" name="size" value="25">
+  </form>
+
+  
+
+  
+      
+<div class="level breathe-horizontal">
+  <div class="level-left">
+    <form method="GET" action="/search/">
+      <div style="display: none;">
+        
+          
+            <select id="searchtype" name="searchtype"><option value="all">All fields</option><option value="title">Title</option><option value="author">Author(s)</option><option value="abstract">Abstract</option><option value="comments">Comments</option><option value="journal_ref">Journal reference</option><option value="acm_class">ACM classification</option><option selected value="msc_class">MSC classification</option><option value="report_num">Report number</option><option value="paper_id">arXiv identifier</option><option value="doi">DOI</option><option value="orcid">ORCID</option><option value="license">License (URI)</option><option value="author_id">arXiv author ID</option><option value="help">Help pages</option><option value="full_text">Full text</option></select>
+          
+        
+          
+            <input id="query" name="query" type="text" value="18D10">
+          
+        
+          
+        
+          
+        
+          
+            <ul id="abstracts"><li><input checked id="abstracts-0" name="abstracts" type="radio" value="show"> <label for="abstracts-0">Show abstracts</label></li><li><input id="abstracts-1" name="abstracts" type="radio" value="hide"> <label for="abstracts-1">Hide abstracts</label></li></ul>
+          
+        
+      </div>
+      <div class="box field is-grouped is-grouped-multiline level-item">
+        <div class="control">
+          <span class="select is-small">
+            <select id="size" name="size"><option selected value="25">25</option><option value="50">50</option><option value="100">100</option><option value="200">200</option></select>
+          </span>
+          <label for="size">results per page</label>.
+        </div>
+        <div class="control">
+          <label for="order">Sort results by</label>
+          <span class="select is-small">
+            <select id="order" name="order"><option selected value="-announced_date_first">Announcement date (newest first)</option><option value="announced_date_first">Announcement date (oldest first)</option><option value="-submitted_date">Submission date (newest first)</option><option value="submitted_date">Submission date (oldest first)</option><option value="">Relevance</option></select>
+          </span>
+        </div>
+        <div class="control">
+          <button class="button is-small is-link">Go</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+      
+
+
+  <nav class="pagination is-small is-centered breathe-horizontal" role="navigation" aria-label="pagination">
+    
+    <a href=""
+      class="pagination-previous is-invisible">Previous
+    </a>
+    
+    
+      <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=25"
+        class="pagination-next" >Next
+      </a>
+    
+    <ul class="pagination-list">
+
+      <li>
+        <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=0"
+          class="pagination-link is-current"
+          aria-label="Goto page 1">1
+        </a>
+      </li>
+
+      
+                                     
+          
+          <li>
+            <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=25"
+              class="pagination-link "
+              aria-label="Page 2"
+              aria-current="page">2
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=50"
+              class="pagination-link "
+              aria-label="Page 3"
+              aria-current="page">3
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=75"
+              class="pagination-link "
+              aria-label="Page 4"
+              aria-current="page">4
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=100"
+              class="pagination-link "
+              aria-label="Page 5"
+              aria-current="page">5
+            </a>
+          </li>
+          
+          <li><span class="pagination-ellipsis">&hellip;</span></li>
+        
+      
+    </ul>
+  </nav>
+  
+
+
+
+<ol class="breathe-horizontal" start="1"> 
+
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2606.27343">arXiv:2606.27343</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2606.27343">pdf</a>, <a href="https://arxiv.org/ps/2606.27343">ps</a>, <a href="https://arxiv.org/format/2606.27343">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Coquasi-bialgebroids and cocycle twisting
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Han%2C+X">Xiao Han</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Majid%2C+S">Shahn Majid</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2606.27343v1-abstract-short" style="display: inline;">
+        We introduce coquasi-bialgebroids over a noncommutative base algebra. Using Takeuchi&#39;s \(\times_B\)-coalgebra formalism, we require the coproduct to remain an algebra map into the Takeuchi product, while the product is associative only up to an invertible normalized \(3\)-cocycle. This gives a bialgebroid analogue of coquasi-bialgebras and provides a natural framework for cocycle-twisted bialgebro&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.27343v1-abstract-full').style.display = 'inline'; document.getElementById('2606.27343v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2606.27343v1-abstract-full" style="display: none;">
+        We introduce coquasi-bialgebroids over a noncommutative base algebra. Using Takeuchi&#39;s \(\times_B\)-coalgebra formalism, we require the coproduct to remain an algebra map into the Takeuchi product, while the product is associative only up to an invertible normalized \(3\)-cocycle. This gives a bialgebroid analogue of coquasi-bialgebras and provides a natural framework for cocycle-twisted bialgebroid constructions.
+  We develop the basic theory and prove a twisting theorem by convolution-invertible \(2\)-cochains. As a main class of examples, we construct coquasi Connes--Moscovici-type bialgebroids on \(B\otimes H\otimes B\), where \(H\) is a coquasi-bialgebra measuring an algebra \(B\), with twisting data \(γ:H\otimes H\to B\). We also give finite-group examples arising from a subgroup \(G\subseteq X\) and a choice of transversal. Finally, under finite projectivity assumptions, we describe the dual quasi-bialgebroid construction and its relation to Drinfeld-type twisting.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.27343v1-abstract-full').style.display = 'none'; document.getElementById('2606.27343v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 25 June, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">16 pages</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (16T05; 16T15; 18D10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2606.05184">arXiv:2606.05184</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2606.05184">pdf</a>, <a href="https://arxiv.org/ps/2606.05184">ps</a>, <a href="https://arxiv.org/format/2606.05184">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Monoidal Categories associated with Kac-Moody Open Richardson Varieties in Symmetric Type
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Bi%2C+Y">Yingjin Bi</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2606.05184v1-abstract-short" style="display: inline;">
+        In the present paper, we study the factorization properties of the generalized minors \( Δ(w_{\leq k}Λ,\, v_{\leq k}Λ), \) introduced by Fomin--Zelevinsky, in the coordinate rings of Kac--Moody open Richardson varieties. By analyzing their simple factors in the monoidal category $\mathscr{C}_{w,v}$, we connect the cluster algebra structure of these varieties with the categorical framework develope&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.05184v1-abstract-full').style.display = 'inline'; document.getElementById('2606.05184v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2606.05184v1-abstract-full" style="display: none;">
+        In the present paper, we study the factorization properties of the generalized minors \( Δ(w_{\leq k}Λ,\, v_{\leq k}Λ), \) introduced by Fomin--Zelevinsky, in the coordinate rings of Kac--Moody open Richardson varieties. By analyzing their simple factors in the monoidal category $\mathscr{C}_{w,v}$, we connect the cluster algebra structure of these varieties with the categorical framework developed by Kashiwara--Kim--Oh--Park.
+  In particular, we prove that cluster monomials in the coordinate ring of a Kac--Moody open Richardson variety correspond to isomorphism classes of simple modules in $\mathscr{C}_{w,v}$. As a consequence, we show that the Grothendieck ring $K(\mathscr{C}_{w,v})$ contains the cluster algebra structure on the coordinate ring constructed by Bao--Ye. In finite type, we further prove that Leclerc&#39;s seeds coincide with Ménard&#39;s seeds for open Richardson varieties, and that the category $\widetilde{\mathscr{C}}_{w,v}$ provides a monoidal categorification of the cluster structure on the open Richardson variety.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2606.05184v1-abstract-full').style.display = 'none'; document.getElementById('2606.05184v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 23 April, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">44 pages</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (16D90; 18D10; 81R10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2604.10336">arXiv:2604.10336</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2604.10336">pdf</a>, <a href="https://arxiv.org/ps/2604.10336">ps</a>, <a href="https://arxiv.org/format/2604.10336">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Combinatorics">math.CO</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Species, Symmetric Functions, and Kronecker Product
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Baolahy%2C+J">Josaphat Baolahy</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Benjamin%2C+R">Randrianirina Benjamin</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2604.10336v1-abstract-short" style="display: inline;">
+        We study two new families of symmetric functions arising from a species-theoretic construction motivated by cycle structure. For each partition of $n$, we define two combinatorial species that decompose into molecules indexed by the same partition, giving rise to two corresponding basis of the homogeneous symmetric functions of degree $n$. We prove that each of these families forms a basis by exhi&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2604.10336v1-abstract-full').style.display = 'inline'; document.getElementById('2604.10336v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2604.10336v1-abstract-full" style="display: none;">
+        We study two new families of symmetric functions arising from a species-theoretic construction motivated by cycle structure. For each partition of $n$, we define two combinatorial species that decompose into molecules indexed by the same partition, giving rise to two corresponding basis of the homogeneous symmetric functions of degree $n$. We prove that each of these families forms a basis by exhibiting explicit cycle-index formulas and triangular transition matrices to the power-sum basis. Using these constructions, we generalize a classical result describing the Kronecker (Hadamard) product in the homogeneous basis to the two new settings. In particular, we show that the categories generated by these species are closed under the Kronecker product, and that the product of two basis elements expands with nonnegative integer coefficients. Our results provide a new combinatorial framework for studying the Kronecker product and suggest avenues toward interpreting its structure constants
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2604.10336v1-abstract-full').style.display = 'none'; document.getElementById('2604.10336v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 11 April, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> April 2026.
+      
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (05E05; 05A15; 05E10; 18D10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2604.08583">arXiv:2604.08583</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2604.08583">pdf</a>, <a href="https://arxiv.org/ps/2604.08583">ps</a>, <a href="https://arxiv.org/format/2604.08583">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="General Physics">physics.gen-ph</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Entropy and Holography through Adjunctions: A Bicategorical Perspective on Landauer&#39;s Principle
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Vlachopulos%2C+P">Petr Vlachopulos</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2604.08583v2-abstract-short" style="display: inline;">
+        We develop a bicategorical framework for entropy and Landauer&#39;s principle in which entropy-ordered state spaces are treated not merely through deterministic monotone maps, but through open many-to-many interfaces encoding feasible realizations between logical and thermodynamic descriptions. This leads to the bicategory of open entropy systems, whose objects are entropy posets, 1-morphisms are prof&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2604.08583v2-abstract-full').style.display = 'inline'; document.getElementById('2604.08583v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2604.08583v2-abstract-full" style="display: none;">
+        We develop a bicategorical framework for entropy and Landauer&#39;s principle in which entropy-ordered state spaces are treated not merely through deterministic monotone maps, but through open many-to-many interfaces encoding feasible realizations between logical and thermodynamic descriptions. This leads to the bicategory of open entropy systems, whose objects are entropy posets, 1-morphisms are profunctorial feasibility relations, and 2-morphisms are refinements. In this setting, the classical order-theoretic Landauer connection is recovered as a representable special case, while the broader bicategorical language captures the openness, multiplicity, and environmental dependence of physical implementation, hence providing a more faithful language for many-to-many realizations between informational boundary states and thermodynamic bulk states. Additionally, the Landauer adjunction in this setting induces a boundary closure monad and a dual bulk interior operator, expressing categorically that bulk-mediated information processing is constrained by entropy and cannot increase recoverable information.
+  We then show that this structure admits a holographic interpretation: the bulk accessible through a given interface is reconstructible from the boundary together with the induced idempotent monad. Via an Eilenberg-Moore construction, the visible bulk is identified, up to equivalence, with the closed sector of boundary data stable under the bulk-boundary round trip. The paper further formulates a quantitative enrichment in which interfaces carry dissipation costs and composition selects the least costly intermediate realization, thereby characterizing the optimal implementation of an information process as one that minimizes entropy production. In this way, the work tries to bring together entropy, Landauer&#39;s principle, and holographic reconstruction within a common categorical framework.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2604.08583v2-abstract-full').style.display = 'none'; document.getElementById('2604.08583v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 25 April, 2026; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 29 March, 2026;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> April 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">37 pages</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (58B25; 18D10; 18D05; 81T45; 53Z05)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2603.19854">arXiv:2603.19854</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2603.19854">pdf</a>, <a href="https://arxiv.org/ps/2603.19854">ps</a>, <a href="https://arxiv.org/format/2603.19854">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Category Theory">math.CT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Algebraic Topology">math.AT</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Operads and equivariance
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Corner%2C+A">Alexander Corner</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Gurski%2C+N">Nick Gurski</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2603.19854v1-abstract-short" style="display: inline;">
+        Operads were originally defined by May to have right actions of the symmetric groups, but later formulations have also used no groups actions at all or group actions by such families as the braid groups. We call such families action operads, as they are the algebraic objects that encode parametrized group actions on operads. In Part I of this paper, we study the basic algebra of action operads&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2603.19854v1-abstract-full').style.display = 'inline'; document.getElementById('2603.19854v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2603.19854v1-abstract-full" style="display: none;">
+        Operads were originally defined by May to have right actions of the symmetric groups, but later formulations have also used no groups actions at all or group actions by such families as the braid groups. We call such families action operads, as they are the algebraic objects that encode parametrized group actions on operads. In Part I of this paper, we study the basic algebra of action operads $Λ$ and the $Λ$-operads they act upon. In Part II, we study $Λ$-operads in the 2-category of small categories.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2603.19854v1-abstract-full').style.display = 'none'; document.getElementById('2603.19854v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 20 March, 2026; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> March 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">96 pages</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (18D50; 18D05; 18D10; 20J99; 55N91)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2602.11559">arXiv:2602.11559</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2602.11559">pdf</a>, <a href="https://arxiv.org/ps/2602.11559">ps</a>, <a href="https://arxiv.org/format/2602.11559">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Algebraic Geometry">math.AG</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Towards Monoidal Categorifications of Twisted Products of Flag Varieties
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Bi%2C+Y">Yingjin Bi</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2602.11559v5-abstract-short" style="display: inline;">
+        Let $G$ be a simple, simply connected, simply laced algebraic group. We construct a monoidal category of representations of the quantum affine algebra $U_q(\widehat{\mathfrak{g}})$ whose Grothendieck ring contains a cluster algebra with initial seed given by that of the coordinate ring of twisted products of flag varieties. This class of varieties includes, in particular, braid varieties and reduc&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2602.11559v5-abstract-full').style.display = 'inline'; document.getElementById('2602.11559v5-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2602.11559v5-abstract-full" style="display: none;">
+        Let $G$ be a simple, simply connected, simply laced algebraic group. We construct a monoidal category of representations of the quantum affine algebra $U_q(\widehat{\mathfrak{g}})$ whose Grothendieck ring contains a cluster algebra with initial seed given by that of the coordinate ring of twisted products of flag varieties. This class of varieties includes, in particular, braid varieties and reduced double Bruhat cells.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2602.11559v5-abstract-full').style.display = 'none'; document.getElementById('2602.11559v5-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 24 May, 2026; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 11 February, 2026;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> February 2026.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">72 pages. Any comments welcome</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (17B37; 13F60; 18D10; 14M15)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2511.21671">arXiv:2511.21671</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2511.21671">pdf</a>, <a href="https://arxiv.org/ps/2511.21671">ps</a>, <a href="https://arxiv.org/format/2511.21671">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Superalgebra deformations of web categories: Affine and cyclotomic webs
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Davidson%2C+N">Nicholas Davidson</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kujawa%2C+J+R">Jonathan R. Kujawa</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Muth%2C+R">Robert Muth</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2511.21671v1-abstract-short" style="display: inline;">
+        Let $\mathbb{k}$ be a characteristic zero domain. We define and study a diagrammatic monoidal $\mathbb{k}$-linear supercategory $\mathbf{Web}^{aff}_{A}$ associated to any locally unital Frobenius $\mathbb{k}$-superalgebra $A$. This category can be viewed variously as an affinization of the finite web category $\mathbf{Web}_{A}$ previously defined by the authors and Zhu, as a thickening of the dege&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2511.21671v1-abstract-full').style.display = 'inline'; document.getElementById('2511.21671v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2511.21671v1-abstract-full" style="display: none;">
+        Let $\mathbb{k}$ be a characteristic zero domain. We define and study a diagrammatic monoidal $\mathbb{k}$-linear supercategory $\mathbf{Web}^{aff}_{A}$ associated to any locally unital Frobenius $\mathbb{k}$-superalgebra $A$. This category can be viewed variously as an affinization of the finite web category $\mathbf{Web}_{A}$ previously defined by the authors and Zhu, as a thickening of the degenerate affine wreath product algebras defined by Savage, or as a Frobenius deformation of affine web categories defined by Song and Wang. We show that there is an asymptotically faithful family of functors from $\mathbf{Web}^{aff}_{A}$ to the monoidal supercategory of endofunctors of $\mathfrak{gl}_n(A)$-modules for every $n \geq 1$, and use this to establish a basis of `decorated double coset diagrams&#39; for morphism spaces in $\mathbf{Web}^{aff}_{A}$. We also define and establish basis results for the cyclotomic quotient category $\mathbf{Web}^Λ_{A}$ associated with a cyclotomic datum $Λ$.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2511.21671v1-abstract-full').style.display = 'none'; document.getElementById('2511.21671v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 26 November, 2025; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> November 2025.
+      
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (17B37; 16G99; 18D10; 20C33)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2510.19104">arXiv:2510.19104</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2510.19104">pdf</a>, <a href="https://arxiv.org/ps/2510.19104">ps</a>, <a href="https://arxiv.org/format/2510.19104">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Category Theory">math.CT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Algebraic Topology">math.AT</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        A Cartesian Promonoidal Kernel on $Δ$ and a Hadamard Contraction of $Δ^n$
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Lengyel%2C+F">Florian Lengyel</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2510.19104v2-abstract-short" style="display: inline;">
+        We exhibit a symmetric promonoidal kernel on the simplex category $Δ$ with Cartesian unit, yielding on representable functors a Hadamard natural transformation $Δ^p\timesΔ^q\toΔ^{pq}$ based on pointwise multiplication of nondecreasing maps. Specializing to $q=1$ yields a simplicial homotopy contracting $Δ^n$ to its $0$-vertex. The contraction is classical; the promonoidal presentation and induced&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2510.19104v2-abstract-full').style.display = 'inline'; document.getElementById('2510.19104v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2510.19104v2-abstract-full" style="display: none;">
+        We exhibit a symmetric promonoidal kernel on the simplex category $Δ$ with Cartesian unit, yielding on representable functors a Hadamard natural transformation $Δ^p\timesΔ^q\toΔ^{pq}$ based on pointwise multiplication of nondecreasing maps. Specializing to $q=1$ yields a simplicial homotopy contracting $Δ^n$ to its $0$-vertex. The contraction is classical; the promonoidal presentation and induced Hadamard map appear not to be recorded.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2510.19104v2-abstract-full').style.display = 'none'; document.getElementById('2510.19104v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 29 October, 2025; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 21 October, 2025;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> October 2025.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">8 pages; short note; added reference to GarnerStreet2015</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (18D10; 18M15; 18A40; 55U10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2509.14552">arXiv:2509.14552</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2509.14552">pdf</a>, <a href="https://arxiv.org/ps/2509.14552">ps</a>, <a href="https://arxiv.org/format/2509.14552">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Monoidal categorification and quantum affine algebras III
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Kashiwara%2C+M">Masaki Kashiwara</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kim%2C+M">Myungho Kim</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Oh%2C+S">Se-jin Oh</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Park%2C+E">Euiyong Park</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2509.14552v1-abstract-short" style="display: inline;">
+        Let $U_q&#39;(\mathfrak{g})$ be an arbitrary quantum affine algebra of either untwisted or twisted type, and let $\mathscr{C}_{\mathfrak{g}}^0$ be its Hernandez-Leclerc category. We denote by $\mathsf{B}$ the braid group determined by the simply-laced finite type Lie algebra $ \mathsf{g}$ associated with $U_q&#39;(\mathfrak{g})$. For any complete duality datum $\mathbb{D}$ and any sequence of simple roots&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2509.14552v1-abstract-full').style.display = 'inline'; document.getElementById('2509.14552v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2509.14552v1-abstract-full" style="display: none;">
+        Let $U_q&#39;(\mathfrak{g})$ be an arbitrary quantum affine algebra of either untwisted or twisted type, and let $\mathscr{C}_{\mathfrak{g}}^0$ be its Hernandez-Leclerc category. We denote by $\mathsf{B}$ the braid group determined by the simply-laced finite type Lie algebra $ \mathsf{g}$ associated with $U_q&#39;(\mathfrak{g})$. For any complete duality datum $\mathbb{D}$ and any sequence of simple roots of $\mathsf{g}$, we construct the corresponding affine cuspidal modules and affine determinantial modules and study their key properties including T-systems. Then, for any element $b$ of the positive braid monoid $\mathsf{B}^+$, we introduce a distinguished subcategory $\mathscr{C}_{\mathfrak{g}}^{\mathbb{D}}(b)$ of $\mathscr{C}_{\mathfrak{g}}^0$ categorifying the specialization of the bosonic extension $\widehat{\mathcal{A}}(b)$ at $q^{1/2}=1$ and investigate its properties including the categorical PBW structure. We finally prove that the subcategory $\mathscr{C}_{\mathfrak{g}}^{\mathbb{D}}(b)$ provides a monoidal categorification of the (quantum) cluster algebra $\widehat{\mathcal{A}}(b)$, which significantly generalizes the earlier monoidal categorification developed by the authors.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2509.14552v1-abstract-full').style.display = 'none'; document.getElementById('2509.14552v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 17 September, 2025; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2025.
+      
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (17B37; 13F60; 18D10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2506.09729">arXiv:2506.09729</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2506.09729">pdf</a>, <a href="https://arxiv.org/ps/2506.09729">ps</a>, <a href="https://arxiv.org/format/2506.09729">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Affine web of type Q
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Song%2C+L">Linliang Song</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Wang%2C+X">Xingyu Wang</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2506.09729v2-abstract-short" style="display: inline;">
+        We introduce a new diagrammatic $\Bbbk$-linear monoidal supercategory $QWeb^\bullet$, the affine web supercategory of type $Q$, where $\Bbbk$ is a commutative ring of characteristic not two. This category is the affinization of the web category of type $Q$, originally introduced by Brown and Kujawa. It serves as the type $Q$ analog of the affine web category introduced by Davidson, Kujawa, Muth an&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2506.09729v2-abstract-full').style.display = 'inline'; document.getElementById('2506.09729v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2506.09729v2-abstract-full" style="display: none;">
+        We introduce a new diagrammatic $\Bbbk$-linear monoidal supercategory $QWeb^\bullet$, the affine web supercategory of type $Q$, where $\Bbbk$ is a commutative ring of characteristic not two. This category is the affinization of the web category of type $Q$, originally introduced by Brown and Kujawa. It serves as the type $Q$ analog of the affine web category introduced by Davidson, Kujawa, Muth and Zhu, and independently by Wang and one of the authors. We obtain diagrammatic integral bases for the Hom-spaces of this category. We show that $QWeb^\bullet$ provides a combinatorial model for a natural monoidal supercategory of endosuperfunctors for Lie superalgebras of type $Q$. .
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2506.09729v2-abstract-full').style.display = 'none'; document.getElementById('2506.09729v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 23 June, 2025; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 11 June, 2025;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> June 2025.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">v2: 44 pages, correct email address and introduction text errors</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (17B10; 18D10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2505.19153">arXiv:2505.19153</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2505.19153">pdf</a>, <a href="https://arxiv.org/ps/2505.19153">ps</a>, <a href="https://arxiv.org/format/2505.19153">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        On Grothedieck rings of rank $4$ self-dual fusion categories
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Dong%2C+J">Jingcheng Dong</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2505.19153v2-abstract-short" style="display: inline;">
+        Let $\C$ be a self-dual fusion category of rank $4$ which has a nontrivial proper fusion subcategory. We identify three new families of Grothendieck rings for $\C$: one of them is completely determined, the other two are parameterized by several non-negative integers.
+        
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2505.19153v2-abstract-full" style="display: none;">
+        Let $\C$ be a self-dual fusion category of rank $4$ which has a nontrivial proper fusion subcategory. We identify three new families of Grothendieck rings for $\C$: one of them is completely determined, the other two are parameterized by several non-negative integers.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2505.19153v2-abstract-full').style.display = 'none'; document.getElementById('2505.19153v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 28 May, 2025; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 25 May, 2025;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2025.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">This paper has not been submitted to any journal. If someone can reduce the number of parameters, please contact me. Any cooperation, improvement and comments are very welcome</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (18D10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2501.07009">arXiv:2501.07009</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2501.07009">pdf</a>, <a href="https://arxiv.org/ps/2501.07009">ps</a>, <a href="https://arxiv.org/format/2501.07009">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Combinatorics">math.CO</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Category Theory">math.CT</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Rings and Algebras">math.RA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Species of Rota-Baxter algebras by rooted trees, twisted bialgebras and Fock functors
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Foissy%2C+L">Loic Foissy</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Guo%2C+L">Li Guo</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Peng%2C+X">Xiao-Song Peng</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Xie%2C+Y">Yunzhou Xie</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Zhang%2C+Y">Yi Zhang</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2501.07009v1-abstract-short" style="display: inline;">
+        As a fundamental and ubiquitous combinatorial notion, species has attracted sustained interest, generalizing from set-theoretical combinatorial to algebraic combinatorial and beyond. The Rota-Baxter algebra is one of the algebraic structures with broad applications from Renormalization of quantum field theory to integrable systems and multiple zeta values. Its interpretation in terms of monoidal c&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2501.07009v1-abstract-full').style.display = 'inline'; document.getElementById('2501.07009v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2501.07009v1-abstract-full" style="display: none;">
+        As a fundamental and ubiquitous combinatorial notion, species has attracted sustained interest, generalizing from set-theoretical combinatorial to algebraic combinatorial and beyond. The Rota-Baxter algebra is one of the algebraic structures with broad applications from Renormalization of quantum field theory to integrable systems and multiple zeta values. Its interpretation in terms of monoidal categories has also recently appeared. This paper studies species of Rota-Baxter algebras, making use of the combinatorial construction of free Rota-Baxter algebras in terms of angularly decorated trees and forests. The notion of simple angularly decorated forests is introduced for this purpose and the resulting Rota-Baxter species is shown to be free. Furthermore, a twisted bialgebra structure, as the bialgebra for species, is established on this free Rota-Baxter species. Finally, through the Fock functor, another proof of the bialgebra structure on free Rota-Baxter algebras is obtained.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2501.07009v1-abstract-full').style.display = 'none'; document.getElementById('2501.07009v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 12 January, 2025; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> January 2025.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">22 pages. Comments welcome</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (18M80; 17B38; 18D10; 05C05; 16S10; 16T10; 08B20)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2501.05747">arXiv:2501.05747</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2501.05747">pdf</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Mathematical Physics">math-ph</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Category Theory">math.CT</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Physics">quant-ph</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Skein Construction of Balanced Tensor Products
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Ara%C3%BAjo%2C+M">Manuel Araújo</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Guu%2C+J">Jin-Cheng Guu</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Hudson%2C+S">Skyler Hudson</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2501.05747v1-abstract-short" style="display: inline;">
+        The theory of tensor categories has found applications across various fields, including representation theory, quantum field theory (conformal in 2 dimensions, and topological in 3 and 4 dimensions), quantum invariants of low-dimensional objects, topological phases of matter, and topological quantum computation. In essence, it is a categorification of the classical theory of algebras and modules.&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2501.05747v1-abstract-full').style.display = 'inline'; document.getElementById('2501.05747v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2501.05747v1-abstract-full" style="display: none;">
+        The theory of tensor categories has found applications across various fields, including representation theory, quantum field theory (conformal in 2 dimensions, and topological in 3 and 4 dimensions), quantum invariants of low-dimensional objects, topological phases of matter, and topological quantum computation. In essence, it is a categorification of the classical theory of algebras and modules. In this analogy, the Deligne tensor product $\boxtimes$ is to the linear tensor $\otimes_{\mathbb{C}}$ as the balanced tensor product $\boxtimes_C$ is to the tensor over algebra $\otimes_A$, where $\mathbb{C}$ is a field, $A$ is a $\mathbb{C}$-algebra, and $C$ is a tensor category.
+  Before this work, several algebraic constructions for balanced tensor products were known, including categories of modules, internal Hom spaces, and generalized categorical centers. In this paper, we introduce a topological construction based on skein theory that offers a better mix of algebra and topology. This approach not only works for products of multiple module categories, but also provides the missing key to proving that the Turaev-Viro state sum model naturally arises from the 3-functor in the classification of fully extended field theories. Building on this result, we establish this long-anticipated proof in an upcoming work.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2501.05747v1-abstract-full').style.display = 'none'; document.getElementById('2501.05747v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 10 January, 2025; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> January 2025.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">25 pages</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (81T45 (Primary) 16D90; 18D10; 17B37 (Secondary))
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2412.20898">arXiv:2412.20898</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2412.20898">pdf</a>, <a href="https://arxiv.org/ps/2412.20898">ps</a>, <a href="https://arxiv.org/format/2412.20898">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Mathematical Physics">math-ph</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Tensor structure on the module category of the triplet superalgebra $\mathcal{SW}(m)$
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Nakano%2C+H">Hiromu Nakano</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2412.20898v1-abstract-short" style="display: inline;">
+        We discuss the tensor structure on the category of modules of the $N=1$ triplet vertex operator superalgebra $\mathcal{SW}(m)$ introduced by Adamović and Milas. Based on the theory of vertex tensor supercategories, we determine the structure of fusion products between the simple and projective $\mathcal{SW}(m)$-modules and show that the tensor supercategory on $\mathcal{SW}(m)$-mod is rigid. Techn&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2412.20898v1-abstract-full').style.display = 'inline'; document.getElementById('2412.20898v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2412.20898v1-abstract-full" style="display: none;">
+        We discuss the tensor structure on the category of modules of the $N=1$ triplet vertex operator superalgebra $\mathcal{SW}(m)$ introduced by Adamović and Milas. Based on the theory of vertex tensor supercategories, we determine the structure of fusion products between the simple and projective $\mathcal{SW}(m)$-modules and show that the tensor supercategory on $\mathcal{SW}(m)$-mod is rigid. Technically, explicit solutions of a fourth-order Fuchsian differential equation are important to show the rigidity of $\mathcal{SW}(m)$-modules. We construct solutions of this Fuchsian differential equation using the theory of the Dotsenko-Fateev integrals developed by Sussman.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2412.20898v1-abstract-full').style.display = 'none'; document.getElementById('2412.20898v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 30 December, 2024; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> December 2024.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">72 pages, 2 figures</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (17B69; 18D10; 81R10; 81T40)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2411.03821">arXiv:2411.03821</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2411.03821">pdf</a>, <a href="https://arxiv.org/ps/2411.03821">ps</a>, <a href="https://arxiv.org/format/2411.03821">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Category Theory">math.CT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Logic in Computer Science">cs.LO</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Interacting Monoidal Structures with Applications in Computing
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Cranch%2C+J">James Cranch</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Struth%2C+G">Georg Struth</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2411.03821v1-abstract-short" style="display: inline;">
+        With a view on applications in computing, in particular concurrency theory and higher-dimensional rewriting, we develop notions of $n$-fold monoid and comonoid objects in $n$-fold monoidal categories and bicategories. We present a series of examples for these structures from various domains, including a categorical model for a communication protocol and a lax $n$-fold relational monoid, which has&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2411.03821v1-abstract-full').style.display = 'inline'; document.getElementById('2411.03821v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2411.03821v1-abstract-full" style="display: none;">
+        With a view on applications in computing, in particular concurrency theory and higher-dimensional rewriting, we develop notions of $n$-fold monoid and comonoid objects in $n$-fold monoidal categories and bicategories. We present a series of examples for these structures from various domains, including a categorical model for a communication protocol and a lax $n$-fold relational monoid, which has previously been used implicitly for higher-dimensional rewriting and which specialises in a natural way to strict $n$-categories. A special set of examples is built around modules and algebras of the boolean semiring, which allows us to deal with semilattices, additively idempotent semirings and quantales using tools from classical algebra.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2411.03821v1-abstract-full').style.display = 'none'; document.getElementById('2411.03821v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 6 November, 2024; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> November 2024.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">47 pages</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (18D10; 68Q85; 06A12)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2410.23965">arXiv:2410.23965</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2410.23965">pdf</a>, <a href="https://arxiv.org/format/2410.23965">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Algebraic Topology">math.AT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Category Theory">math.CT</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Geometric Topology">math.GT</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        The Tangle Hypothesis: Dimension 1
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Ayala%2C+D">David Ayala</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Francis%2C+J">John Francis</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2410.23965v2-abstract-short" style="display: inline;">
+        We introduce an $(\infty,1)$-category ${\sf Bord}_1^{\sf fr}(\mathbb{R}^n)$, the morphisms in which are framed tangles in $\mathbb{R}^n\times \mathbb{D}^1$. We prove that ${\sf Bord}_1^{\sf fr}(\mathbb{R}^n)$ has the universal mapping out property of the 1-dimensional Tangle Hypothesis of Baez--Dolan and Hopkins--Lurie: it is the rigid $\mathcal{E}_n$-monoidal $(\infty,1)$-category freely generate&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2410.23965v2-abstract-full').style.display = 'inline'; document.getElementById('2410.23965v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2410.23965v2-abstract-full" style="display: none;">
+        We introduce an $(\infty,1)$-category ${\sf Bord}_1^{\sf fr}(\mathbb{R}^n)$, the morphisms in which are framed tangles in $\mathbb{R}^n\times \mathbb{D}^1$. We prove that ${\sf Bord}_1^{\sf fr}(\mathbb{R}^n)$ has the universal mapping out property of the 1-dimensional Tangle Hypothesis of Baez--Dolan and Hopkins--Lurie: it is the rigid $\mathcal{E}_n$-monoidal $(\infty,1)$-category freely generated by a single object. Applying this theorem to a dualizable object of a braided monoidal $(\infty,1)$-category gives link invariants, generalizing the Reshetikhin--Turaev invariants.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2410.23965v2-abstract-full').style.display = 'none'; document.getElementById('2410.23965v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 25 November, 2024; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 31 October, 2024;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> October 2024.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">103 pages, 12 figures</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (Primary 57R56. Secondary 57R90; 18B30; 18D10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2409.14359">arXiv:2409.14359</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2409.14359">pdf</a>, <a href="https://arxiv.org/ps/2409.14359">ps</a>, <a href="https://arxiv.org/format/2409.14359">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Exchange matrices of I-boxes
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Kashiwara%2C+M">Masaki Kashiwara</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kim%2C+M">Myungho Kim</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2409.14359v2-abstract-short" style="display: inline;">
+        Admissible chains of i-boxes are important combinatorial tools in the monoidal categorification of cluster algebras, as they provide seeds of the cluster algebra. In this paper, we explore the properties of maximal commuting families of i-boxes in a more general setting, and define a certain matrix associated with such a family, which we call the exchange matrix. It turns out that, when considerin&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2409.14359v2-abstract-full').style.display = 'inline'; document.getElementById('2409.14359v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2409.14359v2-abstract-full" style="display: none;">
+        Admissible chains of i-boxes are important combinatorial tools in the monoidal categorification of cluster algebras, as they provide seeds of the cluster algebra. In this paper, we explore the properties of maximal commuting families of i-boxes in a more general setting, and define a certain matrix associated with such a family, which we call the exchange matrix. It turns out that, when considering the cluster algebra structure on the Grothendieck rings, this matrix is indeed the exchange matrix of the seed associated with the family, both in certain categories of modules over quantum affine algebras and over quiver Hecke algebras. We prove this by constructing explicit short exact sequences that represent the mutation relations.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2409.14359v2-abstract-full').style.display = 'none'; document.getElementById('2409.14359v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 27 November, 2025; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 22 September, 2024;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2024.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">v1 is 62 pages long. In v2, 66 pages with several changes</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (17B37; 13F60; 18D10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2409.04715">arXiv:2409.04715</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2409.04715">pdf</a>, <a href="https://arxiv.org/ps/2409.04715">ps</a>, <a href="https://arxiv.org/format/2409.04715">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Monoidal categorification on open Richardson varieties
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Bi%2C+Y">Yingjin Bi</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2409.04715v4-abstract-short" style="display: inline;">
+        In this paper, we show that the subcategory $\mathscr{C}_{w,v}$ of modules over quiver Hecke algebras is a monoidal categorification of the coordinate ring of any open Richardson variety of Dynkin types after inverting the frozen cluster variables.
+        
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2409.04715v4-abstract-full" style="display: none;">
+        In this paper, we show that the subcategory $\mathscr{C}_{w,v}$ of modules over quiver Hecke algebras is a monoidal categorification of the coordinate ring of any open Richardson variety of Dynkin types after inverting the frozen cluster variables.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2409.04715v4-abstract-full').style.display = 'none'; document.getElementById('2409.04715v4-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 5 November, 2025; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 7 September, 2024;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2024.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">23 pages. We make some improvement on some proofs. Any comments welcome</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (16D90; 18D10; 81R10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2409.02926">arXiv:2409.02926</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2409.02926">pdf</a>, <a href="https://arxiv.org/format/2409.02926">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+        </div>
+      
+        
+          <div class="is-inline-block" style="margin-left: 0.5rem">
+            <div class="tags has-addons">
+              <span class="tag is-dark is-size-7">doi</span>
+              <span class="tag is-light is-size-7"><a class="" href="https://doi.org/10.1007/978-3-030-45847-8_11">10.1007/978-3-030-45847-8_11 <i class="fa fa-external-link" aria-hidden="true"></i></a></span>
+            </div>
+          </div>
+        
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        SU(3) higher roots and their lattices
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Coquereaux%2C+R">Robert Coquereaux</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2409.02926v1-abstract-short" style="display: inline;">
+        After recalling the notion of higher roots (or hyper-roots) associated with &#34;quantum modules&#34; of type $(G, k)$, for $G$ a semi-simple Lie group and $k$ a positive integer, following the definition given by A. Ocneanu in 2000, we study the theta series of their lattices. Here we only consider the higher roots associated with quantum modules (aka module-categories over the fusion category defined by&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2409.02926v1-abstract-full').style.display = 'inline'; document.getElementById('2409.02926v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2409.02926v1-abstract-full" style="display: none;">
+        After recalling the notion of higher roots (or hyper-roots) associated with &#34;quantum modules&#34; of type $(G, k)$, for $G$ a semi-simple Lie group and $k$ a positive integer, following the definition given by A. Ocneanu in 2000, we study the theta series of their lattices. Here we only consider the higher roots associated with quantum modules (aka module-categories over the fusion category defined by the pair $(G,k)$) that are also &#34;quantum subgroups&#34;. For $G=SU{2}$ the notion of higher roots coincides with the usual notion of roots for ADE Dynkin diagrams and the self-fusion restriction (the property of being a quantum subgroup) selects the diagrams of type $A_{r}$, $D_{r}$ with $r$ even, $E_6$ and $E_8$; their theta series are well known. In this paper we take $G=SU{3}$, where the same restriction selects the modules ${\mathcal A}_k$, ${\mathcal D}_k$ with $mod(k,3)=0$, and the three exceptional cases ${\mathcal E}_5$, ${\mathcal E}_9$ and ${\mathcal E}_{21}$. The theta series for their associated lattices are expressed in terms of modular forms twisted by appropriate Dirichlet characters.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2409.02926v1-abstract-full').style.display = 'none'; document.getElementById('2409.02926v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 13 August, 2024; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2024.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">16 pages, 6 figures. Contribution to the volume &#34;An Indisciplinary Tribute to Alex Grossmann&#34;, preprint version (2019)</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (18D10; 22E46; 17B67; 17B37; 52C07; 81R10; 81T40)
+        
+
+        
+      </p>
+    
+
+    
+      <p class="comments is-size-7">
+        <span class="has-text-black-bis has-text-weight-semibold">Journal ref:</span>
+        In: Flandrin, P., Jaffard, S., Paul, T., Torresani, B. (eds) Theoretical Physics, Wavelets, Analysis, Genomics. An Indisciplinary Tribute to Alex Grossmann. Applied and Numerical Harmonic Analysis. Birkhäuser, Cham. 2023
+      </p>
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2409.01918">arXiv:2409.01918</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2409.01918">pdf</a>, <a href="https://arxiv.org/ps/2409.01918">ps</a>, <a href="https://arxiv.org/format/2409.01918">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Category Theory">math.CT</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Central Hopf Monads and Braided Commutative Algebras
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Bortolussi%2C+N">Noelia Bortolussi</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Casta%C3%B1o%2C+A+M">Adriana Mejía Castaño</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Mombelli%2C+M">Martín Mombelli</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2409.01918v2-abstract-short" style="display: inline;">
+        Let $ V$ be a braided tensor category and $ C$ a tensor category equipped with a braided tensor functor $G:V\to Z(C)$. For any exact indecomposable $C$-module category $M$, we explicitly construct a right adjoint of the action functor $ρ:Z^V(C)\to C^*_{M}$ afforded by $M$. Here $Z^V(C)$ is the Müger&#39;s centralizer of the subcategory $G(V)$ inside the center $Z^V(C)$, also known as the relative cent&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2409.01918v2-abstract-full').style.display = 'inline'; document.getElementById('2409.01918v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2409.01918v2-abstract-full" style="display: none;">
+        Let $ V$ be a braided tensor category and $ C$ a tensor category equipped with a braided tensor functor $G:V\to Z(C)$. For any exact indecomposable $C$-module category $M$, we explicitly construct a right adjoint of the action functor $ρ:Z^V(C)\to C^*_{M}$ afforded by $M$. Here $Z^V(C)$ is the Müger&#39;s centralizer of the subcategory $G(V)$ inside the center $Z^V(C)$, also known as the relative center. The construction is parallel to the one presented by K. Shimizu, but using instead the relative coend end. This adjunction turns out to be monadic, thus inducing Hopf monads $T_{V}: C\to C$, such that there is a monoidal equivalence of categories $ C_{T_{V}}\simeq Z^V(C).$ If $\barρ: C^*_{ M}\to Z^V(C)$ is the right adjoint of $ρ,$ then $\barρ(Id_{M})$ is the braided commutative algebra constructed in [R. Laugwitz and C. Walton. Braided commutative algebras over quantized enveloping algebras, Transform. Groups 26(3) (2021), 957--993]. As a consequence of our construction of these algebras, in terms of the right adjoint to $ρ$, we can provide a recipe to compute them when $C=Rep(H\# T)$ is the category of finite-dimensional representations of a finite-dimensional Hopf algebra $H\# T$ obtained by bosonization, and choosing an arbitrary $Rep(H\# T)$-module category $M$. We show an explicit example in the case of Taft algebras.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2409.01918v2-abstract-full').style.display = 'none'; document.getElementById('2409.01918v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 25 August, 2025; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 3 September, 2024;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> September 2024.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">Some long proofs have been made invisible but available in the source file. 29 pages. Communications in Contemporary Mathematics, to appear</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (18D20; 18D10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2407.03798">arXiv:2407.03798</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2407.03798">pdf</a>, <a href="https://arxiv.org/ps/2407.03798">ps</a>, <a href="https://arxiv.org/format/2407.03798">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Category Theory">math.CT</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Deligne-Knop tensor categories and functoriality
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Entova-Aizenbud%2C+I">Inna Entova-Aizenbud</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Heidersdorf%2C+T">Thorsten Heidersdorf</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2407.03798v1-abstract-short" style="display: inline;">
+        A general construction of Knop creates a symmetric monoidal category $\mathcal{T}(\mathcal{A},δ)$ from any regular category $\mathcal{A}$ and a fixed degree function $δ$. A special case of this construction are the Deligne categories $\underline{\operatorname{Rep}}(S_t)$ and $\underline{\operatorname{Rep}}(GL_t(\mathbb{F}_q))$. We discuss when a functor $F:\mathcal{A} \to \mathcal{A}&#39;$ between reg&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2407.03798v1-abstract-full').style.display = 'inline'; document.getElementById('2407.03798v1-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2407.03798v1-abstract-full" style="display: none;">
+        A general construction of Knop creates a symmetric monoidal category $\mathcal{T}(\mathcal{A},δ)$ from any regular category $\mathcal{A}$ and a fixed degree function $δ$. A special case of this construction are the Deligne categories $\underline{\operatorname{Rep}}(S_t)$ and $\underline{\operatorname{Rep}}(GL_t(\mathbb{F}_q))$. We discuss when a functor $F:\mathcal{A} \to \mathcal{A}&#39;$ between regular categories induces a symmetric monoidal functor $\mathcal{T}(\mathcal{A},δ) \to \mathcal{T}(\mathcal{A}&#39;,δ&#39;)$. We then give a criterion when a pair of adjoint functors between two regular categories $\mathcal{A}, \ \mathcal{A}&#39;$ lifts to a pair of adjoint functors between $\mathcal{T}(\mathcal{A},δ)$ and $\mathcal{T}(\mathcal{A}&#39;,δ&#39;)$.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2407.03798v1-abstract-full').style.display = 'none'; document.getElementById('2407.03798v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 4 July, 2024; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> July 2024.
+      
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (05E05; 18D10; 20C30)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2405.11232">arXiv:2405.11232</a>
+        <span>&nbsp;&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Representation Theory">math.RT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Rings and Algebras">math.RA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Multiplication formula for Hernandez and Leclerc&#39;s quivers with potentials
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Bi%2C+Y">Yingjin Bi</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2405.11232v2-abstract-short" style="display: inline;">
+        In this paper, we study multiplication formula of $F$-polynomial of representations of Hernandez and Leclerc&#39;s quivers with potentials. Since the truncated $q$-characters of some real simple modules over a quantum affine group $U_q(\widehat{\mathfrak{g}})$ can be expressed in terms of such $F$-polynomials, one can describe the product of two simple modules over $U_q(\widehat{\mathfrak{g}})$ using&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2405.11232v2-abstract-full').style.display = 'inline'; document.getElementById('2405.11232v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2405.11232v2-abstract-full" style="display: none;">
+        In this paper, we study multiplication formula of $F$-polynomial of representations of Hernandez and Leclerc&#39;s quivers with potentials. Since the truncated $q$-characters of some real simple modules over a quantum affine group $U_q(\widehat{\mathfrak{g}})$ can be expressed in terms of such $F$-polynomials, one can describe the product of two simple modules over $U_q(\widehat{\mathfrak{g}})$ using this multiplication formula.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2405.11232v2-abstract-full').style.display = 'none'; document.getElementById('2405.11232v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 11 July, 2024; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 18 May, 2024;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2024.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">There is an error: In section 2. Jacobian algebras do in general NOT enjoy the Ext-symmetry which was crucial for the GLS multiplication formula. Morevor, the generalized preprojective are in general NOT Jacobian algebras because the nilpotency relations of the loops don&#39;t come from the potential</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (17B37; 13F60; 18D10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2405.07724">arXiv:2405.07724</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2405.07724">pdf</a>, <a href="https://arxiv.org/ps/2405.07724">ps</a>, <a href="https://arxiv.org/format/2405.07724">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Category Theory">math.CT</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Logic in Computer Science">cs.LO</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Programming Languages">cs.PL</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Monoidal closure of Grothendieck constructions via $Σ$-tractable monoidal structures and Dialectica formulas
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Nunes%2C+F+L">Fernando Lucatelli Nunes</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=V%C3%A1k%C3%A1r%2C+M">Matthijs Vákár</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2405.07724v4-abstract-short" style="display: inline;">
+        We examine the categorical structure of the Grothendieck construction $Σ_{\mathsf{C}}\mathsf{L}$ of an indexed category $\mathsf{L} \colon \mathsf{C}^{op} \to \mathsf{CAT}$. Our analysis begins with characterisations of fibred limits, colimits, and monoidal (closed) structures. The study of fibred colimits leads naturally to a generalisation of the notion of extensive indexed category introduced i&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2405.07724v4-abstract-full').style.display = 'inline'; document.getElementById('2405.07724v4-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2405.07724v4-abstract-full" style="display: none;">
+        We examine the categorical structure of the Grothendieck construction $Σ_{\mathsf{C}}\mathsf{L}$ of an indexed category $\mathsf{L} \colon \mathsf{C}^{op} \to \mathsf{CAT}$. Our analysis begins with characterisations of fibred limits, colimits, and monoidal (closed) structures. The study of fibred colimits leads naturally to a generalisation of the notion of extensive indexed category introduced in CHAD for Expressive Total Languages, and gives rise to the concept of left Kan extensivity, which provides a uniform framework for computing colimits in Grothendieck constructions.
+  We then establish sufficient conditions for the (non-fibred) monoidal closure of the total category $Σ_{\mathsf{C}}\mathsf{L}$. This extends Gödel&#39;s Dialectica interpretation and rests upon a new notion of $Σ$-tractable monoidal structure. Under this notion, $Σ$-tractable coproducts unify and extend cocartesian coclosed structures, biproducts, and extensive coproducts. Finally, we consider when the induced closed structure is fibred, showing that this need not hold in general, even in the presence of a fibred monoidal structure.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2405.07724v4-abstract-full').style.display = 'none'; document.getElementById('2405.07724v4-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 27 October, 2025; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 13 May, 2024;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> May 2024.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">Full revision, now it has 62 pages, a full revised version of our contributions on colimits, to appear in TAC</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (18N10; 18C10; 18F10; 18A22; 18A40; 18D10; 03B70; 68Q55; 03F52; 03F03)
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">ACM Class:</span>
+          F.3.2; F.3.3; F.4.1; F.1.1; G.2.2
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2404.15162">arXiv:2404.15162</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2404.15162">pdf</a>, <a href="https://arxiv.org/ps/2404.15162">ps</a>, <a href="https://arxiv.org/format/2404.15162">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Operator Algebras">math.OA</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Category Theory">math.CT</span>
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Rings and Algebras">math.RA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Hilbert spaces over $C^*$-tensor categories, Fredholm modules and cyclic cohomology
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Banerjee%2C+A">Abhishek Banerjee</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Das%2C+S">Subhajit Das</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Kour%2C+S">Surjeet Kour</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2404.15162v1-abstract-short" style="display: inline;">
+        We construct Fredholm modules over an algebra taking values in generalized Hilbert spaces over a rigid $C^*$-tensor category. Using methods of Connes, we obtain Chern characters taking values in cyclic cohomology. These Chern characters are well behaved with respect to the periodicity operator, and depend only on the homotopy class of the Fredholm module.
+        
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2404.15162v1-abstract-full" style="display: none;">
+        We construct Fredholm modules over an algebra taking values in generalized Hilbert spaces over a rigid $C^*$-tensor category. Using methods of Connes, we obtain Chern characters taking values in cyclic cohomology. These Chern characters are well behaved with respect to the periodicity operator, and depend only on the homotopy class of the Fredholm module.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2404.15162v1-abstract-full').style.display = 'none'; document.getElementById('2404.15162v1-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 19 April, 2024; 
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> April 2024.
+      
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (16E40; 18D10; 47A53; 58B34)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+  <li class="arxiv-result">
+    <div class="is-marginless">
+      <p class="list-title is-inline-block"><a href="https://arxiv.org/abs/2401.14238">arXiv:2401.14238</a>
+        <span>&nbsp;[<a href="https://arxiv.org/pdf/2401.14238">pdf</a>, <a href="https://arxiv.org/ps/2401.14238">ps</a>, <a href="https://arxiv.org/format/2401.14238">other</a>]&nbsp;</span>
+      </p>
+      <div class="tags is-inline-block">
+        <span class="tag is-small is-link tooltip is-tooltip-top" data-tooltip="Operator Algebras">math.OA</span>
+        
+          
+            <span class="tag is-small is-grey tooltip is-tooltip-top" data-tooltip="Quantum Algebra">math.QA</span>
+          
+        </div>
+      
+    </div>
+    
+    <p class="title is-5 mathjax">
+      
+        Equivariant $\mathcal{D}$-stability for Actions of Tensor Categories
+      
+    </p>
+    <p class="authors">
+      <span class="has-text-black-bis has-text-weight-semibold">Authors:</span>
+      
+      <a href="/search/?searchtype=author&amp;query=Evington%2C+S">Samuel Evington</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Pacheco%2C+S+G">Sergio Girón Pacheco</a>, 
+      
+      <a href="/search/?searchtype=author&amp;query=Jones%2C+C">Corey Jones</a>
+      
+    </p>
+    
+    <p class="abstract mathjax">
+      <span class="has-text-black-bis has-text-weight-semibold">Abstract</span>:
+      <span class="abstract-short has-text-grey-dark mathjax" id="2401.14238v2-abstract-short" style="display: inline;">
+        We introduce a notion of equivariant $\mathcal{D}$-stability for actions of unitary tensor categories on C$^*$-algebras. We show that, when $\mathcal{D}$ is strongly self-absorbing, equivariant $\mathcal{D}$-stability of an action is equivalent to a unital embedding of $\mathcal{D}$ into a certain subalgebra of Kirchberg&#39;s central sequence algebra. We use this to show $\mathcal{Z}$-stability for a&hellip;
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2401.14238v2-abstract-full').style.display = 'inline'; document.getElementById('2401.14238v2-abstract-short').style.display = 'none';">&#9661; More</a>
+      </span>
+      <span class="abstract-full has-text-grey-dark mathjax" id="2401.14238v2-abstract-full" style="display: none;">
+        We introduce a notion of equivariant $\mathcal{D}$-stability for actions of unitary tensor categories on C$^*$-algebras. We show that, when $\mathcal{D}$ is strongly self-absorbing, equivariant $\mathcal{D}$-stability of an action is equivalent to a unital embedding of $\mathcal{D}$ into a certain subalgebra of Kirchberg&#39;s central sequence algebra. We use this to show $\mathcal{Z}$-stability for a large class of AF-actions.
+        <a class="is-size-7" style="white-space: nowrap;" onclick="document.getElementById('2401.14238v2-abstract-full').style.display = 'none'; document.getElementById('2401.14238v2-abstract-short').style.display = 'inline';">&#9651; Less</a>
+      </span>
+    </p>
+    
+
+    <p class="is-size-7"><span class="has-text-black-bis has-text-weight-semibold">Submitted</span> 5 February, 2025; <span class="has-text-black-bis has-text-weight-semibold">v1</span> submitted 25 January, 2024;
+      <span class="has-text-black-bis has-text-weight-semibold">originally announced</span> January 2024.
+      
+    </p>
+    
+    <p class="comments is-size-7">
+      <span class="has-text-black-bis has-text-weight-semibold">Comments:</span>
+      <span class="has-text-grey-dark mathjax">14 pages, accepted version; Journal of Operator Theory, to appear</span>
+    </p>
+    
+
+    
+      <p class="comments is-size-7">
+        
+
+        
+          <span class="has-text-black-bis has-text-weight-semibold">MSC Class:</span>
+          <span class="search-hit mathjax">18D10</span> (46L35; 46L37; 46L55; 18D10)
+        
+
+        
+      </p>
+    
+
+    
+  </li>
+
+</ol>
+
+
+  <nav class="pagination is-small is-centered breathe-horizontal" role="navigation" aria-label="pagination">
+    
+    <a href=""
+      class="pagination-previous is-invisible">Previous
+    </a>
+    
+    
+      <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=25"
+        class="pagination-next" >Next
+      </a>
+    
+    <ul class="pagination-list">
+
+      <li>
+        <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=0"
+          class="pagination-link is-current"
+          aria-label="Goto page 1">1
+        </a>
+      </li>
+
+      
+                                     
+          
+          <li>
+            <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=25"
+              class="pagination-link "
+              aria-label="Page 2"
+              aria-current="page">2
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=50"
+              class="pagination-link "
+              aria-label="Page 3"
+              aria-current="page">3
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=75"
+              class="pagination-link "
+              aria-label="Page 4"
+              aria-current="page">4
+            </a>
+          </li>
+          
+          <li>
+            <a href="/search/?searchtype=msc_class&amp;query=18D10&amp;size=25&amp;start=100"
+              class="pagination-link "
+              aria-label="Page 5"
+              aria-current="page">5
+            </a>
+          </li>
+          
+          <li><span class="pagination-ellipsis">&hellip;</span></li>
+        
+      
+    </ul>
+  </nav>
+  
+
+  
+
+
+      <div class="is-hidden-tablet">
+        <!-- feedback for mobile only -->
+        <span class="help" style="display: inline-block;"><a href="https://github.com/arXiv/arxiv-search/releases">Search v0.5.6 released 2020-02-24</a>&nbsp;&nbsp;</span>
+      </div>
+    </div>
+
+  </main>
+  <footer>
+    
+<footer class="ds-site-footer">
+  <div class="ds-site-footer-grid">
+    <div class="ds-site-footer-main">
+      <div class="ds-site-footer-ack">
+        We gratefully acknowledge support from
+        our <strong>major funders</strong>,
+        <a href="https://info.arxiv.org/about/ourmembers.html"><strong>member institutions</strong></a><span class="ack-member-inline" hidden>, <strong></strong></span>,
+        and all contributors.
+      </div>
+      <nav class="ds-site-footer-links" aria-label="Site navigation">
+        <a href="https://info.arxiv.org/about">About</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help">Help</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/contact.html">Contact</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/subscribe">Subscribe</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/license/index.html">Copyright</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/policies/privacy_policy.html">Privacy</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://info.arxiv.org/help/web_accessibility.html">Accessibility</a>
+        <span class="ds-site-footer-sep" aria-hidden="true">&middot;</span>
+        <a href="https://status.arxiv.org" target="_blank" rel="noopener noreferrer">Operational Status<span class="is-sr-only"> (opens in new tab)</span></a>
+      </nav>
+    </div>
+    <div class="ds-site-footer-funders" aria-label="Major funders">
+      <div class="ds-site-footer-funders-label">Major funding support from</div>
+      <div class="ds-site-footer-funders-logos">
+        <a class="ds-funder-link" href="https://www.simonsfoundation.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="https://static.arxiv.org/static/base/1.0.1/images/funders/simons-foundation.png" alt="Simons Foundation"></a>
+        <a class="ds-funder-link" href="https://www.sfi.org.bm/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="https://static.arxiv.org/static/base/1.0.1/images/funders/simons-foundation-international.png" alt="Simons Foundation International"></a>
+        <a class="ds-funder-link" href="https://www.schmidtsciences.org/" target="_blank" rel="noopener noreferrer">
+          <img class="ds-funder-logo" src="https://static.arxiv.org/static/base/1.0.1/images/funders/schmidt-sciences.png" alt="Schmidt Sciences"></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+  </footer>
+  <script src="https://static.arxiv.org/static/base/1.0.0a5/js/member_acknowledgement.js"></script>
+  </body>
+</html>

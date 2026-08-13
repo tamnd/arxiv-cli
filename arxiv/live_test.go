@@ -12,6 +12,7 @@ package arxiv
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 )
@@ -438,4 +439,107 @@ func TestLiveCountMatchesTheWalk(t *testing.T) {
 	if got.Total != n {
 		t.Errorf("count says %d, walk handed over %d", got.Total, n)
 	}
+}
+
+// TestLiveS5CountsAreInTheRightRange checks the three fields the export API
+// does not index at all. The numbers move, so the assertions are bands rather
+// than values: what would break is the route, not the arithmetic. Measured
+// 2026-08-13: orcid 0000-0002-0609-9836 125, msc_class 18D10 723, license
+// CC-BY-4.0 565813.
+func TestLiveS5CountsAreInTheRightRange(t *testing.T) {
+	c := liveClient(t)
+	cases := []struct {
+		name     string
+		opts     SearchOptions
+		low, was int
+	}{
+		{"orcid", SearchOptions{ORCID: "0000-0002-0609-9836"}, 100, 125},
+		{"msc_class", SearchOptions{MSCClass: "18D10"}, 600, 723},
+		{"license", SearchOptions{License: "http://creativecommons.org/licenses/by/4.0/"}, 400000, 565813},
+	}
+	for _, tc := range cases {
+		got, err := c.CountSearch(context.Background(), tc.opts)
+		if err != nil {
+			t.Errorf("%s: %v", tc.name, err)
+			continue
+		}
+		if got.Total < tc.low {
+			t.Errorf("%s says %d, which is below %d and was %d in August 2026", tc.name, got.Total, tc.low, tc.was)
+		}
+		t.Logf("%s: %d, was %d", tc.name, got.Total, tc.was)
+	}
+}
+
+// TestLiveS5ReadsAWholeResult takes one real search result apart and checks the
+// record says what it read and what it did not. The search UI gives dates to
+// the day and an announcement month, and a record that pretended to more
+// precision than that would be inventing timestamps.
+func TestLiveS5ReadsAWholeResult(t *testing.T) {
+	c := liveClient(t)
+	papers, err := c.Search(context.Background(), SearchOptions{MSCClass: "18D10", Limit: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(papers) != 1 {
+		t.Fatalf("got %d papers, want 1", len(papers))
+	}
+	p := papers[0]
+	if len(p.Surfaces) != 1 || p.Surfaces[0] != SurfaceSearch {
+		t.Errorf("%s came back on %v, want just s5", p.ID, p.Surfaces)
+	}
+	if len(p.MSCClass) == 0 {
+		t.Errorf("%s answered an msc_class search without carrying one", p.ID)
+	}
+	for _, class := range p.MSCClass {
+		if strings.Count(class, "(") != strings.Count(class, ")") {
+			t.Errorf("%s has a half bracketed class: %q", p.ID, class)
+		}
+	}
+	if p.Title == "" || p.Abstract == "" || len(p.Authors) == 0 {
+		t.Errorf("%s is missing a title, an abstract or its authors", p.ID)
+	}
+	if p.AnnouncedMonth == "" {
+		t.Errorf("%s has no announcement month, which every result line carries", p.ID)
+	}
+	if h := p.FirstSubmitted.UTC().Hour(); h != 0 {
+		t.Errorf("%s claims a submission time of %s, but the page gives a day", p.ID, p.FirstSubmitted)
+	}
+	if len(p.Missed) == 0 {
+		t.Errorf("%s read one surface and said nothing about the rest", p.ID)
+	}
+}
+
+// TestLiveS5CountMatchesTheWalk is the s5 half of the same check the API plane
+// gets: the number printed by a count and the number of records handed over by
+// a walk come from different parts of the page, and a gap between them means
+// one of the two is lying. The slice is narrow on purpose, because every page
+// on this plane costs fifteen seconds.
+func TestLiveS5CountMatchesTheWalk(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	opts := SearchOptions{
+		MSCClass: "18D10",
+		From:     "2026-01",
+		To:       "2026-06",
+		All:      true,
+	}
+
+	got, err := c.CountSearch(ctx, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]bool{}
+	if err := c.SearchStream(ctx, opts, func(p *Paper) error {
+		if seen[p.ID] {
+			t.Errorf("%s came back twice", p.ID)
+		}
+		seen[p.ID] = true
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got.Total != len(seen) {
+		t.Errorf("count says %d, walk handed over %d", got.Total, len(seen))
+	}
+	t.Logf("walked %d papers", len(seen))
 }

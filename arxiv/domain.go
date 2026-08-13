@@ -143,6 +143,14 @@ type searchIn struct {
 	Journal  string   `kit:"flag" help:"match the journal reference"`
 	Report   string   `kit:"flag" help:"match the report number"`
 
+	ACMClass string `kit:"flag,name=acm-class" help:"match the ACM classification, search UI only"`
+	MSCClass string `kit:"flag,name=msc-class" help:"match the MSC classification, search UI only"`
+	DOI      string `kit:"flag,name=doi" help:"match the publisher DOI, search UI only"`
+	ORCID    string `kit:"flag,name=orcid" help:"match an author ORCID, search UI only"`
+	License  string `kit:"flag" help:"match the licence URI, search UI only"`
+	AuthorID string `kit:"flag,name=author-id" help:"match an arXiv author identifier, search UI only"`
+	FullText string `kit:"flag,name=full-text" help:"search paper bodies, which arXiv has moved off limits"`
+
 	From        string `kit:"flag" help:"submitted on or after this date: 2026, 2026-01 or 2026-01-01"`
 	To          string `kit:"flag" help:"submitted on or before this date, inclusive to the end of the period"`
 	UpdatedFrom string `kit:"flag,name=updated-from" help:"last updated on or after this date"`
@@ -167,6 +175,13 @@ func (in searchIn) options() SearchOptions {
 		Comment:     in.Comment,
 		Journal:     in.Journal,
 		Report:      in.Report,
+		ACMClass:    in.ACMClass,
+		MSCClass:    in.MSCClass,
+		DOI:         in.DOI,
+		ORCID:       in.ORCID,
+		License:     in.License,
+		AuthorID:    in.AuthorID,
+		FullText:    in.FullText,
 		From:        in.From,
 		To:          in.To,
 		UpdatedFrom: in.UpdatedFrom,
@@ -209,6 +224,12 @@ results, so a bigger set is cut into date slices that each fit, and the walk
 runs in submission order because relevance is recomputed on every request and a
 walk ordered by it would both repeat and skip papers.
 
+Seven fields live in arXiv's search UI and not in its API: --acm-class,
+--msc-class, --doi, --orcid, --license, --author-id and --full-text. Naming any
+of them sends the whole query to the search UI on the fifteen second plane
+instead, and -v says so. That route cannot take --cat, --raw or the two updated
+date flags, and each refusal explains itself.
+
 To learn only how many results there are, use arxiv count, which costs one
 request.`,
 	}, func(ctx context.Context, in searchIn, emit func(*Paper) error) error {
@@ -231,6 +252,14 @@ type countIn struct {
 	Journal  string   `kit:"flag" help:"match the journal reference"`
 	Report   string   `kit:"flag" help:"match the report number"`
 
+	ACMClass string `kit:"flag,name=acm-class" help:"match the ACM classification, search UI only"`
+	MSCClass string `kit:"flag,name=msc-class" help:"match the MSC classification, search UI only"`
+	DOI      string `kit:"flag,name=doi" help:"match the publisher DOI, search UI only"`
+	ORCID    string `kit:"flag,name=orcid" help:"match an author ORCID, search UI only"`
+	License  string `kit:"flag" help:"match the licence URI, search UI only"`
+	AuthorID string `kit:"flag,name=author-id" help:"match an arXiv author identifier, search UI only"`
+	FullText string `kit:"flag,name=full-text" help:"search paper bodies, which arXiv has moved off limits"`
+
 	From        string `kit:"flag" help:"submitted on or after this date: 2026, 2026-01 or 2026-01-01"`
 	To          string `kit:"flag" help:"submitted on or before this date, inclusive to the end of the period"`
 	UpdatedFrom string `kit:"flag,name=updated-from" help:"last updated on or after this date"`
@@ -252,6 +281,13 @@ func (in countIn) options() SearchOptions {
 		Comment:     in.Comment,
 		Journal:     in.Journal,
 		Report:      in.Report,
+		ACMClass:    in.ACMClass,
+		MSCClass:    in.MSCClass,
+		DOI:         in.DOI,
+		ORCID:       in.ORCID,
+		License:     in.License,
+		AuthorID:    in.AuthorID,
+		FullText:    in.FullText,
 		From:        in.From,
 		To:          in.To,
 		UpdatedFrom: in.UpdatedFrom,
