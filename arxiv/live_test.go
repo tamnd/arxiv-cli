@@ -543,3 +543,54 @@ func TestLiveS5CountMatchesTheWalk(t *testing.T) {
 	}
 	t.Logf("walked %d papers", len(seen))
 }
+
+// TestLiveTaxonomyStillMatchesTheSnapshot compares the bundled tables to the
+// live ones. It is meant to fail: when arXiv adds a category or a set, this is
+// how the tool finds out, and the fix is to save the pages again.
+func TestLiveTaxonomyStillMatchesTheSnapshot(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+
+	live, err := c.Categories(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	saved := snapshotCategories()
+	if len(live) != len(saved) {
+		t.Errorf("arxiv now publishes %d categories and the bundled table has %d, so save the page again", len(live), len(saved))
+	}
+	have := map[string]bool{}
+	for _, c := range saved {
+		have[c.Code] = true
+	}
+	for _, c := range live {
+		if !have[c.Code] {
+			t.Errorf("%s (%s) is new since the snapshot", c.Code, c.Name)
+		}
+		if c.SetSpec == "" {
+			t.Errorf("%s found no OAI set", c.Code)
+		}
+	}
+
+	sets, err := c.Sets(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(sets) != 174 {
+		t.Errorf("%d distinct sets, want the 174 measured in August 2026", len(sets))
+	}
+	// The two vocabularies are joined and not rewritten, so the two shapes that
+	// prove it are worth checking against the live tables every time.
+	for _, s := range sets {
+		switch s.SetSpec {
+		case "cs:cs:CL":
+			if s.Category != "cs.CL" {
+				t.Errorf("cs:cs:CL harvests %q, want cs.CL", s.Category)
+			}
+		case "physics:hep-th":
+			if s.Category != "hep-th" {
+				t.Errorf("physics:hep-th harvests %q, want hep-th", s.Category)
+			}
+		}
+	}
+}

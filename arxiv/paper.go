@@ -91,7 +91,9 @@ func (c *Client) papersAt(ctx context.Context, ids []axid.ID, depth Depth) ([]Pa
 			return papers, err
 		}
 		for _, e := range feed.Entries {
-			papers = append(papers, entryToPaper(e, u, c.now()))
+			p := entryToPaper(e, u, c.now())
+			c.noteUnknownCategories(p.Categories...)
+			papers = append(papers, p)
 		}
 	}
 

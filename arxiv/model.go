@@ -18,14 +18,18 @@ const (
 	// SurfaceSearch is the search UI, which is the only surface that answers
 	// for the seven fields in doc 02 section 2.3.
 	SurfaceSearch = "s5" // the search UI
+	// SurfaceTaxonomy is the category taxonomy page. It is declared here with
+	// the rest of the vocabulary and used in taxonomy.go.
+	SurfaceTaxonomy = "s7" // the category taxonomy
 )
 
 // SurfaceNames is what each id is, for `arxiv planes` and for help text.
 var SurfaceNames = map[string]string{
-	SurfaceAPI:    "the export API",
-	SurfaceOAI:    "OAI-PMH",
-	SurfaceAbs:    "the abstract page",
-	SurfaceSearch: "the search UI",
+	SurfaceAPI:      "the export API",
+	SurfaceOAI:      "OAI-PMH",
+	SurfaceAbs:      "the abstract page",
+	SurfaceSearch:   "the search UI",
+	SurfaceTaxonomy: "the category taxonomy",
 }
 
 // Envelope is what every record carries about its own provenance.

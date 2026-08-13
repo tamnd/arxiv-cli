@@ -120,6 +120,12 @@ func buildSearch(o SearchOptions) (searchPlan, error) {
 	}
 	p.Sort, p.Order, p.Limit, p.All = sort, order, o.Limit, o.All
 
+	// The category check runs before anything is built, because a wrong code
+	// costs a request and comes back as zero results rather than as an error.
+	if err := checkCategories(o.Categories); err != nil {
+		return p, err
+	}
+
 	if wantsS5(o) {
 		h, err := buildS5(o, p.Sort, p.Order)
 		if err != nil {

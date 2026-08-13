@@ -304,6 +304,7 @@ func (c *Client) searchS5(ctx context.Context, p searchPlan, emit func(*Paper) e
 				return nil
 			}
 			paper := s5ToPaper(page.Results[i], u, at)
+			c.noteUnknownCategories(paper.Categories...)
 			sent++
 			if err := emit(&paper); err != nil {
 				return err
