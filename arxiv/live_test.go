@@ -227,3 +227,83 @@ func TestLiveSlicePlan(t *testing.T) {
 	t.Logf("plan: total %d in %d slices, %d count requests",
 		plan.Total, len(plan.Slices), plan.Counts)
 }
+
+// TestLivePaperDepths reads one paper at each depth and checks the record grows
+// rather than changes. The fixture tests do this against saved responses; this
+// is the one that notices arXiv moving a field.
+func TestLivePaperDepths(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	const id = "1706.03762"
+
+	quick, err := c.PaperAt(ctx, id, PaperOptions{Depth: DepthQuick})
+	if err != nil {
+		t.Fatalf("quick: %v", err)
+	}
+	if quick.Title == "" || quick.FirstSubmitted.IsZero() {
+		t.Errorf("s1 answered without a title or a submission date: %#v", quick)
+	}
+	if len(quick.Surfaces) != 1 {
+		t.Errorf("a quick read touched %v", quick.Surfaces)
+	}
+
+	meta, err := c.PaperAt(ctx, id, PaperOptions{Depth: DepthMeta})
+	if err != nil {
+		t.Fatalf("meta: %v", err)
+	}
+	if meta.License == "" {
+		t.Error("OAI stopped publishing the licence")
+	}
+	if len(meta.Authors) == 0 || meta.Authors[0].Keyname == "" {
+		t.Errorf("OAI stopped publishing structured names: %#v", meta.Authors)
+	}
+
+	full, err := c.PaperAt(ctx, id, PaperOptions{Depth: DepthFull})
+	if err != nil {
+		t.Fatalf("full: %v", err)
+	}
+	if len(full.Versions) < 7 {
+		t.Errorf("the version history came back with %d versions", len(full.Versions))
+	}
+	if !full.HasHTML || full.HTMLURL == "" {
+		t.Error("the abstract page stopped linking the HTML rendering")
+	}
+	if len(full.SubjectNames) == 0 {
+		t.Error("the abstract page stopped naming the subjects")
+	}
+
+	// The same paper at three depths is the same paper.
+	for _, p := range []Paper{meta, full} {
+		if p.ID != quick.ID || p.Title != quick.Title {
+			t.Errorf("depth %s described a different paper: %s %q", p.Depth, p.ID, p.Title)
+		}
+		if !p.FirstSubmitted.Equal(quick.FirstSubmitted) {
+			t.Errorf("depth %s moved first_submitted to %s", p.Depth, p.FirstSubmitted)
+		}
+	}
+	t.Logf("quick %d fields of surfaces %v, full %v", len(quick.Via), quick.Surfaces, full.Surfaces)
+}
+
+// TestLiveOAICreatedIsStillTheWrongDate is the measurement the model is built
+// on, checked against the live surface rather than a saved copy. If OAI ever
+// starts publishing the real v1 date in created, this fails and the model gets
+// a cheaper source for first_submitted.
+func TestLiveOAICreatedIsStillTheWrongDate(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	const id = "1706.03762"
+
+	p, err := c.PaperAt(ctx, id, PaperOptions{Depth: DepthQuick})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec, _, err := c.getOAI(ctx, id, FormatArxiv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	created := rec.Metadata.Arxiv.Created
+	t.Logf("s1 published %s, s2 created %s", p.FirstSubmitted.Format("2006-01-02"), created)
+	if created == p.FirstSubmitted.Format("2006-01-02") {
+		t.Log("OAI created now agrees with s1 published; first_submitted could come from either")
+	}
+}

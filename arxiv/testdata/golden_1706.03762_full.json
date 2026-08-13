@@ -1,0 +1,176 @@
+{
+  "kind": "paper",
+  "surfaces": [
+    "s1",
+    "s2",
+    "s3"
+  ],
+  "sources": [
+    "https://export.arxiv.org/api/query",
+    "https://oaipmh.arxiv.org/oai?identifier=oai%3AarXiv.org%3A1706.03762\u0026metadataPrefix=arXiv",
+    "https://oaipmh.arxiv.org/oai?identifier=oai%3AarXiv.org%3A1706.03762\u0026metadataPrefix=arXivRaw",
+    "https://arxiv.org/abs/1706.03762"
+  ],
+  "retrieved_at": "2026-08-06T12:00:00Z",
+  "via": {
+    "abstract": "s1",
+    "authors": "s2",
+    "categories": "s1",
+    "comment": "s1",
+    "first_submitted": "s1",
+    "has_html": "s3",
+    "has_source": "s3",
+    "last_updated": "s1",
+    "license": "s2",
+    "oai_datestamp": "s2",
+    "subject_names": "s3",
+    "submitter": "s2",
+    "title": "s1",
+    "versions": "s2"
+  },
+  "missed": [
+    "affiliations, the licence name and the section tree were not read; arxiv paper 1706.03762 --depth text reads them"
+  ],
+  "id": "1706.03762",
+  "version": 7,
+  "is_latest": true,
+  "versioned_id": "1706.03762v7",
+  "oai_id": "oai:arXiv.org:1706.03762",
+  "doi": "10.48550/arXiv.1706.03762",
+  "url": "https://arxiv.org/abs/1706.03762v7",
+  "style": "new",
+  "title": "Attention Is All You Need",
+  "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.",
+  "comment": "15 pages, 5 figures",
+  "authors": [
+    {
+      "name": "Ashish Vaswani",
+      "keyname": "Vaswani",
+      "forenames": "Ashish",
+      "via": "s2"
+    },
+    {
+      "name": "Noam Shazeer",
+      "keyname": "Shazeer",
+      "forenames": "Noam",
+      "via": "s2"
+    },
+    {
+      "name": "Niki Parmar",
+      "keyname": "Parmar",
+      "forenames": "Niki",
+      "via": "s2"
+    },
+    {
+      "name": "Jakob Uszkoreit",
+      "keyname": "Uszkoreit",
+      "forenames": "Jakob",
+      "via": "s2"
+    },
+    {
+      "name": "Llion Jones",
+      "keyname": "Jones",
+      "forenames": "Llion",
+      "via": "s2"
+    },
+    {
+      "name": "Aidan N. Gomez",
+      "keyname": "Gomez",
+      "forenames": "Aidan N.",
+      "via": "s2"
+    },
+    {
+      "name": "Lukasz Kaiser",
+      "keyname": "Kaiser",
+      "forenames": "Lukasz",
+      "via": "s2"
+    },
+    {
+      "name": "Illia Polosukhin",
+      "keyname": "Polosukhin",
+      "forenames": "Illia",
+      "via": "s2"
+    }
+  ],
+  "primary_category": "cs.CL",
+  "categories": [
+    "cs.CL",
+    "cs.LG"
+  ],
+  "cross_lists": [
+    "cs.LG"
+  ],
+  "subject_names": {
+    "cs.CL": "Computation and Language",
+    "cs.LG": "Machine Learning"
+  },
+  "first_submitted": "2017-06-12T17:57:34Z",
+  "last_updated": "2023-08-02T00:41:18Z",
+  "oai_datestamp": "2023-08-03T00:00:00Z",
+  "versions": [
+    {
+      "version": 1,
+      "date": "2017-06-12T17:57:34Z",
+      "size_bytes": 1128448,
+      "source_type": "D",
+      "source_kind": "pdf-only",
+      "via": "s2"
+    },
+    {
+      "version": 2,
+      "date": "2017-06-19T16:49:45Z",
+      "size_bytes": 1150976,
+      "source_type": "D",
+      "source_kind": "pdf-only",
+      "via": "s2"
+    },
+    {
+      "version": 3,
+      "date": "2017-06-20T05:20:02Z",
+      "size_bytes": 1150976,
+      "source_type": "D",
+      "source_kind": "pdf-only",
+      "via": "s2"
+    },
+    {
+      "version": 4,
+      "date": "2017-06-30T17:29:30Z",
+      "size_bytes": 1150976,
+      "source_type": "D",
+      "source_kind": "pdf-only",
+      "via": "s2"
+    },
+    {
+      "version": 5,
+      "date": "2017-12-06T03:30:32Z",
+      "size_bytes": 1149952,
+      "source_type": "D",
+      "source_kind": "pdf-only",
+      "via": "s2"
+    },
+    {
+      "version": 6,
+      "date": "2023-07-24T00:48:54Z",
+      "size_bytes": 1150976,
+      "source_type": "D",
+      "source_kind": "pdf-only",
+      "via": "s2"
+    },
+    {
+      "version": 7,
+      "date": "2023-08-02T00:41:18Z",
+      "size_bytes": 1150976,
+      "source_type": "D",
+      "source_kind": "pdf-only",
+      "via": "s2"
+    }
+  ],
+  "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+  "pdf_url": "https://arxiv.org/pdf/1706.03762v7",
+  "html_url": "https://arxiv.org/html/1706.03762v7",
+  "has_html": true,
+  "has_source": true,
+  "submitter": "Llion Jones",
+  "withdrawn": false,
+  "depth": "full"
+}
