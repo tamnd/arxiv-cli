@@ -51,20 +51,28 @@ func TestDomainRegisters(t *testing.T) {
 	app := kit.New(kit.Identity{Binary: "arxiv", Version: "test"})
 	(Domain{}).Register(app)
 
-	want := map[string]bool{
-		"search":     false,
-		"paper":      false,
-		"author":     false,
-		"categories": false,
+	// name to the group it belongs in. read means it talks to arXiv, explain
+	// means it answers from what the tool already knows.
+	groups := map[string]string{
+		"search":     "read",
+		"paper":      "read",
+		"author":     "read",
+		"categories": "read",
+		"id":         "explain",
+	}
+	want := map[string]bool{}
+	for name := range groups {
+		want[name] = false
 	}
 	for _, op := range app.Ops() {
-		if _, ok := want[op.Meta().Name]; !ok {
+		group, ok := groups[op.Meta().Name]
+		if !ok {
 			t.Errorf("unexpected op %q", op.Meta().Name)
 			continue
 		}
 		want[op.Meta().Name] = true
-		if op.Meta().Group != "read" {
-			t.Errorf("op %q is in group %q, want read", op.Meta().Name, op.Meta().Group)
+		if op.Meta().Group != group {
+			t.Errorf("op %q is in group %q, want %q", op.Meta().Name, op.Meta().Group, group)
 		}
 		if op.Meta().Write {
 			t.Errorf("op %q is marked as a write; arXiv is read only", op.Meta().Name)
