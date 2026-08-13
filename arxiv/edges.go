@@ -136,6 +136,8 @@ func surfaceOfURL(raw string) string {
 		return SurfaceTaxonomy
 	case strings.HasPrefix(raw, authorBase):
 		return SurfaceAuthorID
+	case strings.HasPrefix(raw, bibtexBase):
+		return SurfaceBibTeX
 	case strings.HasPrefix(raw, htmlBase):
 		return SurfaceFullText
 	case strings.HasPrefix(raw, trackbackBase):

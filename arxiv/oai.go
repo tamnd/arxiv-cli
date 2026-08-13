@@ -140,23 +140,33 @@ func (c *Client) getOAI(ctx context.Context, id, prefix string) (*oaiRecord, str
 	if err != nil {
 		return nil, u, err
 	}
+	rec, err := parseOAIRecord(resp.Body, id)
+	return rec, u, err
+}
+
+// parseOAIRecord decodes one GetRecord body.
+//
+// It is separate from the fetch because the archive has the bytes already: it
+// writes them to disk and then builds the record from the same bytes, rather
+// than asking OAI a second time for something it is holding.
+func parseOAIRecord(body []byte, id string) (*oaiRecord, error) {
 	var out oaiResponse
-	if err := xml.Unmarshal(resp.Body, &out); err != nil {
-		return nil, u, fmt.Errorf("decode oai response: %w", err)
+	if err := xml.Unmarshal(body, &out); err != nil {
+		return nil, fmt.Errorf("decode oai response: %w", err)
 	}
 	// OAI reports its own errors inside a 200, the way s1 does, so the body has
 	// to be checked even on success.
 	if code := strings.TrimSpace(out.Error.Code); code != "" {
 		if code == "idDoesNotExist" {
-			return nil, u, fmt.Errorf("%s: %w", id, ErrNotFound)
+			return nil, fmt.Errorf("%s: %w", id, ErrNotFound)
 		}
-		return nil, u, fmt.Errorf("oai %s: %s", code, cleanText(out.Error.Message))
+		return nil, fmt.Errorf("oai %s: %s", code, cleanText(out.Error.Message))
 	}
 	rec := out.GetRecord.Record
 	if rec.Header.Identifier == "" {
-		return nil, u, fmt.Errorf("%s: %w", id, ErrNotFound)
+		return nil, fmt.Errorf("%s: %w", id, ErrNotFound)
 	}
-	return &rec, u, nil
+	return &rec, nil
 }
 
 // ─── merging ───

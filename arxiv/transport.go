@@ -55,6 +55,9 @@ type response struct {
 	FromCache bool
 	// Plane is the plane the request went to, empty on a cache hit.
 	Plane string
+	// Status is the HTTP status of the request that succeeded, zero on a cache
+	// hit. Only the archive keeps it.
+	Status int
 }
 
 // fetch gets a URL through the cache, the right plane's limiter, and the retry
@@ -68,7 +71,22 @@ func (c *Client) fetch(ctx context.Context, rawURL string, ttl time.Duration) (r
 		c.logf(2, "cache hit %s", rawURL)
 		return response{Body: body, FromCache: true}, nil
 	}
+	resp, err := c.fetchLive(ctx, rawURL)
+	if err != nil {
+		return resp, err
+	}
+	c.cache.put(rawURL, resp.Body)
+	return resp, nil
+}
 
+// fetchLive is fetch with the cache left out on both sides: it does not look
+// there first and it does not put anything there afterwards.
+//
+// This is what an archive uses. An archive that could be served out of the
+// cache is not an archive of what arXiv says today, it is a copy of what the
+// cache happened to be holding, and the one thing an archive has to be able to
+// promise is that these bytes came off the wire at the time in meta.json.
+func (c *Client) fetchLive(ctx context.Context, rawURL string) (response, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return response{}, errs.Wrap(errs.KindGeneric, err, "bad URL %q", rawURL)
@@ -84,9 +102,9 @@ func (c *Client) fetch(ctx context.Context, rawURL string, ttl time.Duration) (r
 			return response{}, ctxErr(err)
 		}
 		body, verdict := c.try(ctx, rawURL)
+		c.watched(rawURL, verdict.status, len(body), verdict.err)
 		if verdict.err == nil {
-			c.cache.put(rawURL, body)
-			return response{Body: body, Plane: plane.Name}, nil
+			return response{Body: body, Plane: plane.Name, Status: verdict.status}, nil
 		}
 		last = verdict.err
 
@@ -136,6 +154,42 @@ type verdict struct {
 	err       error
 	policy    *retryPolicy
 	holdPlane bool
+	// status is the HTTP status, or zero when the request never got one. Only
+	// the read log uses it, and a zero there is the honest answer: a timeout is
+	// not a 500 and writing one down would invent an answer arXiv never gave.
+	status int
+}
+
+// Watch registers a function called once for every request that leaves the
+// machine, with the URL, the status, the body size and the error.
+//
+// It is a hook rather than a return value because a read like PaperAt makes
+// four requests and returns one paper, so there is nowhere in that signature to
+// put four rows. The crawler sets it to the store's read log.
+func (c *Client) Watch(fn func(Read)) {
+	c.watchMu.Lock()
+	c.watch = fn
+	c.watchMu.Unlock()
+}
+
+// watched hands one request to the watcher, if there is one.
+func (c *Client) watched(rawURL string, status, bytes int, err error) {
+	c.watchMu.Lock()
+	fn := c.watch
+	c.watchMu.Unlock()
+	if fn == nil {
+		return
+	}
+	r := NewRead(rawURL, status, int64(bytes), c.now(), err)
+	// The plane is this client's rather than the package table's. They are the
+	// same everywhere except in a test, and a test that logged an empty plane
+	// would not be testing the column that matters.
+	if u, perr := url.Parse(rawURL); perr == nil {
+		if plane, ok := planeIn(c.planes, u.Host); ok {
+			r.Plane = plane.Name
+		}
+	}
+	fn(r)
 }
 
 // try makes one request and classifies the outcome against the retry table.
@@ -168,7 +222,7 @@ func (c *Client) try(ctx context.Context, rawURL string) ([]byte, verdict) {
 
 	switch {
 	case resp.StatusCode == http.StatusOK:
-		return body, verdict{}
+		return body, verdict{status: resp.StatusCode}
 
 	case resp.StatusCode == http.StatusTooManyRequests:
 		return nil, verdict{
@@ -176,10 +230,14 @@ func (c *Client) try(ctx context.Context, rawURL string) ([]byte, verdict) {
 				rawURL, strings.TrimSpace(string(body))),
 			policy:    &rateRetry,
 			holdPlane: true,
+			status:    resp.StatusCode,
 		}
 
 	case resp.StatusCode == http.StatusNotFound:
-		return nil, verdict{err: errs.NotFound("arxiv has nothing at %s", rawURL)}
+		return nil, verdict{
+			err:    errs.NotFound("arxiv has nothing at %s", rawURL),
+			status: resp.StatusCode,
+		}
 
 	case resp.StatusCode == http.StatusBadRequest:
 		// arXiv answers a malformed query with a well-formed Atom feed whose
@@ -187,15 +245,22 @@ func (c *Client) try(ctx context.Context, rawURL string) ([]byte, verdict) {
 		// HTML page instead. Both are the caller's fault, neither is worth a
 		// retry, and the message differs so the user can tell them apart.
 		if apiErr := parseAPIError(body); apiErr != nil {
-			return nil, verdict{err: errs.Wrap(errs.KindUsage, apiErr, "arxiv rejected the query")}
+			return nil, verdict{
+				err:    errs.Wrap(errs.KindUsage, apiErr, "arxiv rejected the query"),
+				status: resp.StatusCode,
+			}
 		}
-		return nil, verdict{err: errs.Usage(
-			"arxiv returned 400 for %s with an HTML body, which usually means the id list was too long", rawURL)}
+		return nil, verdict{
+			err: errs.Usage(
+				"arxiv returned 400 for %s with an HTML body, which usually means the id list was too long", rawURL),
+			status: resp.StatusCode,
+		}
 
 	case resp.StatusCode == http.StatusServiceUnavailable:
 		return nil, verdict{
 			err:    errs.New(errs.KindGeneric, "arxiv returned 503 for %s", rawURL),
 			policy: &serverRetry,
+			status: resp.StatusCode,
 		}
 
 	case resp.StatusCode >= 500:
@@ -203,16 +268,22 @@ func (c *Client) try(ctx context.Context, rawURL string) ([]byte, verdict) {
 		// was wrong, so retrying it would just ask the same wrong question
 		// five more times.
 		if apiErr := parseAPIError(body); apiErr != nil {
-			return nil, verdict{err: errs.Wrap(errs.KindGeneric, apiErr,
-				"arxiv returned %d and an error entry", resp.StatusCode)}
+			return nil, verdict{
+				err: errs.Wrap(errs.KindGeneric, apiErr,
+					"arxiv returned %d and an error entry", resp.StatusCode),
+				status: resp.StatusCode,
+			}
 		}
 		return nil, verdict{
 			err:    errs.New(errs.KindGeneric, "arxiv returned %d for %s", resp.StatusCode, rawURL),
 			policy: &serverRetry,
+			status: resp.StatusCode,
 		}
 	}
-	return nil, verdict{err: errs.New(errs.KindGeneric,
-		"arxiv returned %d for %s", resp.StatusCode, rawURL)}
+	return nil, verdict{
+		err:    errs.New(errs.KindGeneric, "arxiv returned %d for %s", resp.StatusCode, rawURL),
+		status: resp.StatusCode,
+	}
 }
 
 // ctxErr turns a cancelled or timed out context into a classified error, so a

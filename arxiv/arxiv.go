@@ -90,6 +90,14 @@ type Client struct {
 	unknownMu   sync.Mutex
 	unknownCats map[string]bool
 
+	// watch, when set, is handed every request that actually went out. A cache
+	// hit is not one: nothing was asked of arXiv, so there is nothing to log
+	// and nothing to charge a budget for. This is how a crawl fills the read
+	// table without every read path in the package having to know about a
+	// store.
+	watchMu sync.Mutex
+	watch   func(Read)
+
 	sleep func(context.Context, time.Duration) error
 	// now stamps a record's retrieved_at. It is a field so a golden test can
 	// pin a timestamp without pinning the day it ran.
