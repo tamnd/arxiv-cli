@@ -14,13 +14,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
-)
 
-const (
-	apiBase = "https://export.arxiv.org/api/query"
+	"github.com/tamnd/any-cli/kit/errs"
 )
 
 // DefaultUserAgent identifies the client to arXiv. The real one is stamped with
@@ -141,14 +138,16 @@ func (c *Client) Search(ctx context.Context, opts SearchOptions) ([]Paper, error
 	if limit <= 0 {
 		limit = 10
 	}
-
-	params := url.Values{}
-	params.Set("search_query", buildQuery(opts.Query, opts.Category))
-	params.Set("max_results", fmt.Sprintf("%d", limit))
-	params.Set("sortBy", sortParam(opts.Sort))
-	params.Set("sortOrder", "descending")
-
-	feed, err := c.getXML(ctx, apiBase+"?"+params.Encode(), TTLSearch)
+	sort, err := ParseSort(opts.Sort)
+	if err != nil {
+		return nil, errs.Usage("%s", err.Error())
+	}
+	feed, err := c.Do(ctx, Request{
+		Query: buildQuery(opts.Query, opts.Category),
+		Max:   limit,
+		Sort:  sort,
+		Order: Descending,
+	}, TTLSearch)
 	if err != nil {
 		return nil, err
 	}
@@ -158,11 +157,7 @@ func (c *Client) Search(ctx context.Context, opts SearchOptions) ([]Paper, error
 // Paper fetches the single paper with the given id. The id must be canonical:
 // no version, no subject class. Returns ErrNotFound for an empty result.
 func (c *Client) Paper(ctx context.Context, id string) (Paper, error) {
-	params := url.Values{}
-	params.Set("id_list", id)
-	params.Set("max_results", "1")
-
-	feed, err := c.getXML(ctx, apiBase+"?"+params.Encode(), TTLPaper)
+	feed, err := c.Do(ctx, Request{IDs: []string{id}, Max: 1}, TTLPaper)
 	if err != nil {
 		return Paper{}, err
 	}
@@ -172,57 +167,76 @@ func (c *Client) Paper(ctx context.Context, id string) (Paper, error) {
 	return entryToPaper(feed.Entries[0]), nil
 }
 
+// Papers fetches many papers in one request per batch, which is by far the
+// cheapest way to hydrate a list of known ids.
+func (c *Client) Papers(ctx context.Context, ids []string) ([]Paper, error) {
+	var out []Paper
+	for _, batch := range BatchIDs(ids) {
+		feed, err := c.Do(ctx, Request{IDs: batch, Max: len(batch)}, TTLPaper)
+		if err != nil {
+			return out, err
+		}
+		out = append(out, feedToPapers(feed)...)
+	}
+	return out, nil
+}
+
 // SearchByAuthor returns up to n papers whose author field matches name,
 // newest first.
 func (c *Client) SearchByAuthor(ctx context.Context, name string, n int) ([]Paper, error) {
 	if n <= 0 {
 		n = 10
 	}
-	params := url.Values{}
-	params.Set("search_query", "au:"+authorQuery(name))
-	params.Set("max_results", fmt.Sprintf("%d", n))
-	params.Set("sortBy", "submittedDate")
-	params.Set("sortOrder", "descending")
-
-	feed, err := c.getXML(ctx, apiBase+"?"+params.Encode(), TTLSearch)
+	feed, err := c.Do(ctx, Request{
+		Query: Term(FieldAuthor, name),
+		Max:   n,
+		Sort:  SortSubmitted,
+		Order: Descending,
+	}, TTLSearch)
 	if err != nil {
 		return nil, err
 	}
 	return feedToPapers(feed), nil
 }
 
+// Count returns how many results a query has, which is the number the slicer
+// makes all of its decisions on.
+func (c *Client) Count(ctx context.Context, q Query) (int, error) {
+	feed, err := c.Do(ctx, CountRequest(q), TTLSearch)
+	if err != nil {
+		return 0, err
+	}
+	return feed.Total, nil
+}
+
+// Do sends one request and returns the decoded feed.
+func (c *Client) Do(ctx context.Context, req Request, ttl time.Duration) (*atomFeed, error) {
+	u, err := req.URL()
+	if err != nil {
+		return nil, err
+	}
+	c.logf(1, "GET %s", u)
+	return c.getXML(ctx, u, ttl)
+}
+
 // ─── internal helpers ─────────────────────────────────────────────────────────
 
-func buildQuery(query, category string) string {
-	// Terms are joined with a real space and a real AND. The encoder escapes
-	// them exactly once on the way out, which is the whole fix: writing "+AND+"
-	// here and then encoding turned the plus signs into %2B and sent arXiv one
-	// nonsense term instead of two.
+// buildQuery turns the free-text form of a search into a query.
+//
+// Terms are joined with a real space and a real AND, and the encoder escapes
+// them exactly once on the way out. That is the whole of the fix: writing
+// "+AND+" here and then encoding turned the plus signs into %2B and asked arXiv
+// one nonsense question instead of two real ones.
+func buildQuery(query, category string) Query {
 	words := strings.Fields(query)
-	q := "all:" + strings.Join(words, " AND ")
+	terms := make([]Query, 0, len(words)+1)
+	for _, w := range words {
+		terms = append(terms, Term(FieldAll, w))
+	}
 	if category != "" {
-		q += " AND cat:" + category
+		terms = append(terms, Term(FieldCategory, category))
 	}
-	return q
-}
-
-func authorQuery(name string) string {
-	if strings.ContainsAny(name, " \t") {
-		// wrap in quotes for phrase search
-		return `"` + strings.TrimSpace(name) + `"`
-	}
-	return name
-}
-
-func sortParam(s string) string {
-	switch s {
-	case "date":
-		return "submittedDate"
-	case "updated":
-		return "lastUpdatedDate"
-	default:
-		return "relevance"
-	}
+	return And(terms...)
 }
 
 func feedToPapers(feed *atomFeed) []Paper {
