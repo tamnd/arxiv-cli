@@ -12,6 +12,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/tamnd/any-cli/kit/errs"
 	"github.com/tamnd/arxiv-cli/pkg/axid"
+	"github.com/tamnd/arxiv-cli/pkg/graph"
 )
 
 // s11 is the only inbound link data arXiv publishes.
@@ -75,7 +76,7 @@ type Trackback struct {
 
 // TrackbackURI is the node for one ping, so two reads of the same trackback
 // land on the same node.
-func TrackbackURI(id string) string { return "ax://trackback/" + id }
+func TrackbackURI(id string) string { return graph.Trackback(id) }
 
 // trackbackTimeLayout is the page's own format.
 //

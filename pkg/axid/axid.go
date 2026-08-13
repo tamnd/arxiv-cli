@@ -18,6 +18,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tamnd/arxiv-cli/pkg/graph"
 )
 
 // Style is which of arXiv's two id schemes a reference belongs to.
@@ -365,9 +367,9 @@ func (id ID) PDFURL() string { return "https://arxiv.org/pdf/" + id.Versioned() 
 // the end is the id.
 func (id ID) URI() string {
 	if id.Version > 0 {
-		return fmt.Sprintf("ax://paper/%s#v%d", id.Canonical, id.Version)
+		return graph.Version(id.Canonical, id.Version)
 	}
-	return "ax://paper/" + id.Canonical
+	return graph.Paper(id.Canonical)
 }
 
 // Versioned is the canonical id with the version appended when the reference

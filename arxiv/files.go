@@ -12,6 +12,7 @@ import (
 
 	"github.com/tamnd/any-cli/kit/errs"
 	"github.com/tamnd/arxiv-cli/pkg/axid"
+	"github.com/tamnd/arxiv-cli/pkg/graph"
 )
 
 // s12 is the bytes themselves: the PDF, the LaTeXML rendering and the
@@ -97,10 +98,7 @@ type File struct {
 // FileURI names one file of one version, so two reads of the same bytes land on
 // the same node.
 func FileURI(id string, version int, kind string) string {
-	if version > 0 {
-		return fmt.Sprintf("ax://file/%s#v%d.%s", id, version, kind)
-	}
-	return "ax://file/" + id + "#" + kind
+	return graph.File(id, version, kind)
 }
 
 // Files lists what arXiv serves for a paper.

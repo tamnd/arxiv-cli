@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"unicode"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/tamnd/any-cli/kit/errs"
-	"golang.org/x/text/unicode/norm"
+	"github.com/tamnd/arxiv-cli/pkg/graph"
 )
 
 // This file answers "who wrote this" twice, in two ways that are not the same
@@ -89,15 +88,19 @@ type Person struct {
 	Warning string `json:"warning,omitempty" table:"-"`
 }
 
+// The node builders live in pkg/graph, which is the only place a node is named.
+// These stay as thin wrappers because the surrounding code reads better for
+// them, and because a second spelling of a node kind is a second node.
+
 // AuthorURI is the node for a registered person.
-func AuthorURI(id string) string { return "ax://author/" + id }
+func AuthorURI(id string) string { return graph.Author(id) }
 
 // NameURI is the node for an author string.
-func NameURI(name string) string { return "ax://name/" + nameSlug(name) }
+func NameURI(name string) string { return graph.Name(name) }
 
 // ORCIDURI is the node for an ORCID, which is the identifier that survives a
 // name change and is the only one shared with the world outside arXiv.
-func ORCIDURI(orcid string) string { return "ax://orcid/" + orcid }
+func ORCIDURI(orcid string) string { return graph.ORCID(orcid) }
 
 // nameSlug normalises a name for joining: lowercased, accents folded,
 // punctuation dropped, spaces to hyphens.
@@ -105,29 +108,7 @@ func ORCIDURI(orcid string) string { return "ax://orcid/" + orcid }
 // This is a lossy join and it is meant to be, because the value of a name node
 // is that two spellings of one string land together. It is also exactly why a
 // name node is not a person node.
-func nameSlug(name string) string {
-	// NFD splits an accented letter into the letter and its mark, so dropping
-	// the marks leaves the letter. Without this, Erdős and Erdos are two nodes
-	// and the join everybody wants is the one that never happens.
-	folded := norm.NFD.String(strings.ToLower(strings.TrimSpace(name)))
-	var b strings.Builder
-	gap := false
-	for _, r := range folded {
-		switch {
-		case unicode.Is(unicode.Mn, r):
-			// a combining mark, dropped with the accent it belongs to
-		case unicode.IsLetter(r) || unicode.IsDigit(r):
-			if gap && b.Len() > 0 {
-				b.WriteByte('-')
-			}
-			gap = false
-			b.WriteRune(r)
-		default:
-			gap = true
-		}
-	}
-	return b.String()
-}
+func nameSlug(name string) string { return graph.NormalizeName(name) }
 
 // AuthorByName searches the author field and returns a name match.
 //
