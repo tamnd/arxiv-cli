@@ -161,6 +161,7 @@ date, or last update.`,
 
 type paperIn struct {
 	ID     string  `kit:"arg" help:"an arXiv id, a versioned id, or an abs URL"`
+	Depth  string  `kit:"flag" default:"meta" enum:"quick,meta,full,text" help:"how many surfaces to read"`
 	Client *Client `kit:"inject"`
 }
 
@@ -175,13 +176,20 @@ func registerPaper(app *kit.App) {
 		Long: `Fetch a single paper by its arXiv id.
 
 The id may be bare (1706.03762), versioned (1706.03762v7), an old-style id
-(hep-th/9711200), or a full URL.`,
+(hep-th/9711200), or a full URL.
+
+--depth chooses how many of arXiv's surfaces to read. quick is one request to
+the export API. meta adds the OAI record, which is where the report number, the
+subject classes and the structured author names live. full adds the version
+history and the abstract page, and the abstract page is on the fifteen second
+plane, so it costs fifteen seconds a paper. Whatever a depth did not look at is
+named in the missed field rather than left as a zero.`,
 	}, func(ctx context.Context, in paperIn, emit func(*Paper) error) error {
-		id, err := ParsePaperID(in.ID)
+		depth, err := ParseDepth(in.Depth)
 		if err != nil {
 			return errs.Usage("%s", err.Error())
 		}
-		paper, err := in.Client.Paper(ctx, id)
+		paper, err := in.Client.PaperAt(ctx, in.ID, PaperOptions{Depth: depth})
 		if err != nil {
 			return mapErr(err)
 		}
