@@ -15,13 +15,17 @@ const (
 	SurfaceAPI = "s1" // export API Atom
 	SurfaceOAI = "s2" // OAI-PMH
 	SurfaceAbs = "s3" // the abstract page
+	// SurfaceSearch is the search UI, which is the only surface that answers
+	// for the seven fields in doc 02 section 2.3.
+	SurfaceSearch = "s5" // the search UI
 )
 
 // SurfaceNames is what each id is, for `arxiv planes` and for help text.
 var SurfaceNames = map[string]string{
-	SurfaceAPI: "the export API",
-	SurfaceOAI: "OAI-PMH",
-	SurfaceAbs: "the abstract page",
+	SurfaceAPI:    "the export API",
+	SurfaceOAI:    "OAI-PMH",
+	SurfaceAbs:    "the abstract page",
+	SurfaceSearch: "the search UI",
 }
 
 // Envelope is what every record carries about its own provenance.
@@ -158,6 +162,12 @@ type Paper struct {
 	FirstSubmitted time.Time `json:"first_submitted,omitzero" table:"submitted,time"`
 	// LastUpdated is the current version's timestamp.
 	LastUpdated time.Time `json:"last_updated,omitzero" table:"-"`
+	// AnnouncedMonth is the search UI's "originally announced July 2026",
+	// which is a month and not a day. It is a string rather than a time
+	// because writing it into Announced would mean inventing a day of the
+	// month, and 2026-07-01 is a specific false claim where "July 2026" is a
+	// vague true one.
+	AnnouncedMonth string `json:"announced_month,omitempty" table:"-"`
 	// Announced is the announcement date, which is not the submission date: a
 	// paper submitted at 22:00 on a Friday is announced the following Monday.
 	Announced time.Time `json:"announced,omitzero" table:"-"`
@@ -185,6 +195,11 @@ type Paper struct {
 	// paper still has an id, a title and a history, and it must not silently
 	// vanish from a result set.
 	Withdrawn bool `json:"withdrawn" table:"-"`
+
+	// Hits are the query terms arXiv highlighted in this result, which only a
+	// search result has and only the search UI publishes. It is the one thing
+	// a result knows that the paper itself does not.
+	Hits []string `json:"hits,omitempty" table:"-"`
 
 	// Depth is how deeply this record was read.
 	Depth string `json:"depth" table:"-"`
@@ -390,17 +405,39 @@ func cleanText(s string) string {
 // honoured: 1801.00001 carries "37-40, 51N20, 51M04, 51-04" and other records
 // carry "I.2.7; I.2.6". A part like "Primary 60G51" keeps its qualifier,
 // because dropping it would lose the submitter's own ranking.
+//
+// A separator inside brackets is not a separator. 2606.27343 carries
+// "18D10 (16T05, 16T15, 18D10)", where the bracket holds the secondary classes
+// for the primary one in front of it, and splitting through it turns one class
+// into three that are each missing half of themselves.
 func splitClasses(s string) []string {
 	s = cleanText(s)
 	if s == "" {
 		return nil
 	}
 	var out []string
-	for _, part := range strings.FieldsFunc(s, func(r rune) bool { return r == ';' || r == ',' }) {
-		if p := strings.TrimSpace(part); p != "" {
+	depth, start := 0, 0
+	flush := func(end int) {
+		if p := strings.TrimSpace(s[start:end]); p != "" {
 			out = append(out, p)
 		}
 	}
+	for i, r := range s {
+		switch r {
+		case '(', '[':
+			depth++
+		case ')', ']':
+			if depth > 0 {
+				depth--
+			}
+		case ';', ',':
+			if depth == 0 {
+				flush(i)
+				start = i + 1
+			}
+		}
+	}
+	flush(len(s))
 	return out
 }
 

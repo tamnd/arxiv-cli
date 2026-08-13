@@ -191,6 +191,11 @@ func TestSplitClasses(t *testing.T) {
 		// Measured on 1801.00001, which is comma separated.
 		{"37-40, 51N20, 51M04, 51-04", []string{"37-40", "51N20", "51M04", "51-04"}},
 		{"I.2.7; I.2.6", []string{"I.2.7", "I.2.6"}},
+		// Measured on 2606.27343, where the bracket holds the secondary
+		// classes for the primary one in front of it and the commas inside it
+		// are not separators.
+		{"18D10 (16T05, 16T15, 18D10)", []string{"18D10 (16T05, 16T15, 18D10)"}},
+		{"Primary 60G51, 60J65 (Secondary 35K05, 60H15)", []string{"Primary 60G51", "60J65 (Secondary 35K05, 60H15)"}},
 		{"  ", nil},
 	}
 	for _, tc := range cases {

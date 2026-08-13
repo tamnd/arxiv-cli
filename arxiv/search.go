@@ -37,6 +37,16 @@ type SearchOptions struct {
 	Journal  string
 	Report   string
 
+	// These seven are the fields only the search UI indexes, and any one of
+	// them routes the whole query onto the HTML plane. See s5.go.
+	ACMClass string
+	MSCClass string
+	DOI      string
+	ORCID    string
+	License  string
+	AuthorID string
+	FullText string
+
 	// From and To bound submittedDate, UpdatedFrom and UpdatedTo bound
 	// lastUpdatedDate. Each accepts 2026, 2026-01 or 2026-01-01.
 	From        string
@@ -70,6 +80,12 @@ type searchPlan struct {
 	Order  Order
 	Limit  int
 	All    bool
+	// HTML is set when the query names a field only the search UI has, in
+	// which case the whole query goes there and none of the fields above are
+	// used. The query is never split across the two planes: s1 and s5 rank
+	// differently, and an intersection of two differently ranked truncated
+	// lists is not a result set.
+	HTML *s5Plan
 }
 
 // full is the query as it goes on the wire for an unsliced read.
@@ -103,6 +119,18 @@ func buildSearch(o SearchOptions) (searchPlan, error) {
 		return p, errs.Usage("%s", err.Error())
 	}
 	p.Sort, p.Order, p.Limit, p.All = sort, order, o.Limit, o.All
+
+	if wantsS5(o) {
+		h, err := buildS5(o, p.Sort, p.Order)
+		if err != nil {
+			return p, err
+		}
+		p.HTML = h
+		if err := checkAll(p, o); err != nil {
+			return p, err
+		}
+		return p, nil
+	}
 
 	q, err := searchQuery(o)
 	if err != nil {
@@ -241,10 +269,19 @@ func checkAll(p searchPlan, o SearchOptions) error {
 		// a duplicate on one page and a paper that is never returned at all.
 		return errs.Usage("all cannot sort by relevance, because relevance is recomputed on every request and a walk would both repeat and skip papers; use --sort submitted or --sort updated")
 	}
-	if len(o.Categories) == 0 && !p.Ranged && p.Limit <= 0 {
-		return errs.Usage("all needs a bound: give a --cat, a date range, or a --limit, because arXiv is 2.7 million papers and walking all of it is days of pacing")
+	ranged := p.Ranged
+	if p.HTML != nil {
+		ranged = p.HTML.From != "" || p.HTML.To != ""
 	}
-	return nil
+	if len(o.Categories) > 0 || ranged || p.Limit > 0 {
+		return nil
+	}
+	if p.HTML != nil {
+		// The search UI has no --cat to bound it with, so the sentence names
+		// only the two bounds that exist there.
+		return errs.Usage("all needs a bound: give a date range or a --limit, because the search UI pages on the fifteen second plane and a walk of everything it will show is an afternoon")
+	}
+	return errs.Usage("all needs a bound: give a --cat, a date range, or a --limit, because arXiv is 2.7 million papers and walking all of it is days of pacing")
 }
 
 // boundRange parses a pair of date flags into a range.
@@ -352,6 +389,9 @@ func (c *Client) SearchStream(ctx context.Context, opts SearchOptions, emit func
 	plan, err := buildSearch(opts)
 	if err != nil {
 		return err
+	}
+	if plan.HTML != nil {
+		return c.searchS5(ctx, plan, emit)
 	}
 	if plan.All {
 		return c.searchAll(ctx, plan, emit)
@@ -525,6 +565,9 @@ func (c *Client) CountSearch(ctx context.Context, opts SearchOptions) (Count, er
 	plan, err := buildSearch(opts)
 	if err != nil {
 		return Count{}, err
+	}
+	if plan.HTML != nil {
+		return c.countS5(ctx, plan)
 	}
 	q := plan.full()
 	req := CountRequest(q)
