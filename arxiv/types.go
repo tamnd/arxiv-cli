@@ -22,7 +22,7 @@ type Paper struct {
 
 // Category is the static record used by the categories command.
 type Category struct {
-	Code        string `json:"code"`
+	Code        string `json:"code" kit:"id"`
 	Description string `json:"description"`
 }
 
