@@ -214,7 +214,7 @@ func TestListDayHeading(t *testing.T) {
 func TestListToPaper(t *testing.T) {
 	page := listFixture(t, "list_cs.CL_2026-01.html")
 	source := "https://arxiv.org/list/cs.CL/2026-01?skip=0&show=50"
-	p := listToPaper(page.Rows[0], source, testTime)
+	p := listToPaper(page.Rows[0], SurfaceList, source, testTime)
 
 	if p.Kind != "paper" || p.ID != "2601.00086" || p.Version != 3 {
 		t.Errorf("identity: got %+v", p)
@@ -261,7 +261,7 @@ func TestListToPaper(t *testing.T) {
 // fact.
 func TestListToPaperCarriesTheAnnouncementDay(t *testing.T) {
 	page := listFixture(t, "list_cs.CL_recent.html")
-	p := listToPaper(page.Rows[0], "https://arxiv.org/list/cs.CL/recent?skip=0&show=50", testTime)
+	p := listToPaper(page.Rows[0], SurfaceList, "https://arxiv.org/list/cs.CL/recent?skip=0&show=50", testTime)
 	if p.Announced.IsZero() || p.Via["announced"] != SurfaceList {
 		t.Errorf("Announced: got %s via %q", p.Announced, p.Via["announced"])
 	}

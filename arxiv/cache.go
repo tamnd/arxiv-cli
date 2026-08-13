@@ -27,6 +27,9 @@ const (
 	TTLTaxonomy = 7 * 24 * time.Hour
 	// TTLListing is a day for a month that has ended.
 	TTLListing = 24 * time.Hour
+	// TTLAuthor is a day. An identifier page gains a row when the author
+	// publishes, which is not something that happens twice in an afternoon.
+	TTLAuthor = 24 * time.Hour
 	// TTLRendered is thirty days, for full text and BibTeX. A rendered version
 	// of a paper never changes; a new version gets a new key.
 	TTLRendered = 30 * 24 * time.Hour

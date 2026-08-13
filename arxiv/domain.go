@@ -473,8 +473,9 @@ named in the missed field rather than left as a zero.`,
 }
 
 type authorIn struct {
-	Name   string  `kit:"arg" help:"an author name, surname or full"`
-	Limit  int     `kit:"flag,short=n,inherit" default:"10" help:"how many papers to return"`
+	Ref    string  `kit:"arg" help:"an author name, or an arXiv author identifier with --id"`
+	ID     bool    `kit:"flag,name=id" help:"read the author identifier page instead of searching the name"`
+	Limit  int     `kit:"flag,short=n,inherit" default:"10" help:"how many papers to return on a name search"`
 	Client *Client `kit:"inject"`
 }
 
@@ -482,20 +483,41 @@ func registerAuthor(app *kit.App) {
 	kit.Handle(app, kit.OpMeta{
 		Name:    "author",
 		Group:   "read",
-		List:    true,
-		URIType: "paper",
-		Summary: "List papers under an author name",
-		Args:    []kit.Arg{{Name: "name", Help: "an author name, surname or full"}},
-		Long: `List papers under an author name.
+		Single:  true,
+		URIType: "author",
+		Summary: "Look up an author by name or by arXiv identifier",
+		Args:    []kit.Arg{{Name: "ref", Help: "an author name, or an arXiv author identifier with --id"}},
+		Long: `Look up an author, either as a name or as a registered person.
 
-The name goes to the arXiv au: field prefix, so this is a string match on the
-author field rather than a person. Results come back newest first.`,
-	}, func(ctx context.Context, in authorIn, emit func(*Paper) error) error {
-		papers, err := in.Client.SearchByAuthor(ctx, in.Name, in.Limit)
+Two lookups wear one name here and the record says which one ran.
+
+Without --id the name goes to the arXiv au: field prefix, which is a string
+match on text somebody typed. Two people share a name, one person publishes
+under three spellings, and identified is false on the record because a name
+match is not a person.
+
+With --id it reads arxiv.org/a/<identifier>.html, which is arXiv asserting that
+a registered person owns a set of papers, and it is the only surface anywhere on
+arXiv that carries an ORCID. identified is true on that record.
+
+An identifier looks like baez_j_1 and is never guessed from a name: the number
+on the end is arXiv's own way of telling two people with the same surname and
+initial apart. A 404 means the author never registered a page, which says
+nothing about whether they have papers, and the message says so.`,
+	}, func(ctx context.Context, in authorIn, emit func(*Person) error) error {
+		var (
+			person Person
+			err    error
+		)
+		if in.ID {
+			person, err = in.Client.AuthorByID(ctx, in.Ref)
+		} else {
+			person, err = in.Client.AuthorByName(ctx, in.Ref, in.Limit)
+		}
 		if err != nil {
 			return mapErr(err)
 		}
-		return emitAll(papers, emit)
+		return emit(&person)
 	})
 }
 

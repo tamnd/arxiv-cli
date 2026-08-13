@@ -27,6 +27,10 @@ const (
 	// SurfaceTaxonomy is the category taxonomy page. It is declared here with
 	// the rest of the vocabulary and used in taxonomy.go.
 	SurfaceTaxonomy = "s7" // the category taxonomy
+	// SurfaceAuthorID is the author identifier page, which is the only surface
+	// that carries an ORCID and the only one where arXiv says a named person
+	// owns a set of papers.
+	SurfaceAuthorID = "s8" // the author identifier page
 )
 
 // SurfaceNames is what each id is, for `arxiv planes` and for help text.
@@ -38,6 +42,7 @@ var SurfaceNames = map[string]string{
 	SurfaceSearch:   "the search UI",
 	SurfaceRSS:      "the announcement feed",
 	SurfaceTaxonomy: "the category taxonomy",
+	SurfaceAuthorID: "the author identifier page",
 }
 
 // Envelope is what every record carries about its own provenance.
