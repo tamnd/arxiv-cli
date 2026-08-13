@@ -30,13 +30,24 @@ type EdgeOptions struct {
 // `arxiv edges 1706.03762` costs exactly what `arxiv paper 1706.03762` costs and
 // returns twenty claims instead of one record.
 func (c *Client) Edges(ctx context.Context, ref string, o EdgeOptions) ([]graph.Edge, error) {
+	_, edges, err := c.edgesWithPaper(ctx, ref, o)
+	return edges, err
+}
+
+// edgesWithPaper is Edges, keeping the record it read.
+//
+// `arxiv rdf` needs both: the claims are the graph and the record carries the
+// title, the abstract and the dates, which are values rather than edges. Reading
+// the paper twice to get them would be a second request on a paced plane for
+// bytes this call already had in its hand.
+func (c *Client) edgesWithPaper(ctx context.Context, ref string, o EdgeOptions) (Paper, []graph.Edge, error) {
 	depth := o.Depth
 	if depth == "" {
 		depth = DepthMeta
 	}
 	p, err := c.PaperAt(ctx, ref, PaperOptions{Depth: depth})
 	if err != nil {
-		return nil, err
+		return Paper{}, nil, err
 	}
 
 	var s edgeSet
@@ -55,7 +66,7 @@ func (c *Client) Edges(ctx context.Context, ref string, o EdgeOptions) ([]graph.
 		case errors.Is(err, ErrNotFound):
 			c.logf(1, "%s claims a rendering and there is none, so there are no cites claims", p.ID)
 		default:
-			return nil, err
+			return Paper{}, nil, err
 		}
 	}
 	if depth.AtLeast(DepthText) && !p.HasHTML {
@@ -72,12 +83,12 @@ func (c *Client) Edges(ctx context.Context, ref string, o EdgeOptions) ([]graph.
 		case errors.Is(err, ErrNotFound):
 			c.logf(1, "%s has no trackbacks", p.ID)
 		default:
-			return nil, err
+			return Paper{}, nil, err
 		}
 	}
 
 	c.report(s.refused)
-	return filterEdges(s.out, o.Predicates), nil
+	return p, filterEdges(s.out, o.Predicates), nil
 }
 
 // report says what was refused. Nothing should ever be, so it is said out loud
