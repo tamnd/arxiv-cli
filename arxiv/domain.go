@@ -74,6 +74,8 @@ func (Domain) Register(app *kit.App) {
 	registerPaper(app)
 	registerFullText(app)
 	registerTrackbacks(app)
+	registerFiles(app)
+	registerDownload(app)
 	registerBibTeX(app)
 	registerCite(app)
 	registerAuthor(app)
@@ -609,6 +611,112 @@ The crawler never touches it.`,
 			}
 		}
 		return nil
+	})
+}
+
+type filesIn struct {
+	Ref     string  `kit:"arg" help:"an arXiv id, a versioned id, or an abs URL"`
+	Measure bool    `kit:"flag" help:"ask arxiv for the real size, filename and checksum of each file"`
+	Client  *Client `kit:"inject"`
+}
+
+func registerFiles(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "files",
+		Group:   "read",
+		Summary: "What arXiv serves for a paper: the PDF, the HTML and the source",
+		Args:    []kit.Arg{{Name: "ref", Help: "an arXiv id, a versioned id, or an abs URL"}},
+		Long: `List the files arXiv serves for a paper.
+
+Which files exist is already on the paper record, as the two capability flags
+the abstract page publishes, so the list itself costs nothing beyond the paper
+read. A PDF is always there. HTML is there for papers submitted since December
+2023 and for some earlier ones. Source is there unless the paper was submitted
+as a PDF.
+
+The size on a source file is arXiv's own figure out of the submission history
+and it is marked as such, because it is not the number of bytes that will
+arrive: the version table says 1,102 KB for 1706.03762v7 and the archive served
+is 1,150,988 bytes. There is no figure at all for the PDF anywhere in the
+metadata.
+
+--measure asks arxiv.org about each file, which is one request a file on the
+fifteen second plane, and fills in the real size, the filename arXiv would give
+it, the content type and arXiv's sha256. It is a one byte range request rather
+than a HEAD, because a HEAD comes back through the CDN with no content-length
+on it.`,
+	}, func(ctx context.Context, in filesIn, emit func(*File) error) error {
+		if in.Measure {
+			in.Client.notice("measuring each file costs one request on the fifteen second plane")
+		}
+		files, err := in.Client.Files(ctx, in.Ref, in.Measure)
+		if err != nil {
+			return mapErr(err)
+		}
+		for i := range files {
+			if err := emit(&files[i]); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+type downloadIn struct {
+	Ref     string  `kit:"arg" help:"an arXiv id, a versioned id, or an abs URL"`
+	Kind    string  `kit:"flag" default:"pdf" enum:"pdf,html,source" help:"which file to fetch"`
+	Dir     string  `kit:"flag,short=d" help:"the directory to write into, the working directory by default"`
+	Out     string  `kit:"flag" help:"an explicit destination file, which overrides --dir and the name arxiv gives it"`
+	Extract bool    `kit:"flag" help:"unpack the source archive next to itself"`
+	Resume  bool    `kit:"flag" help:"continue a .part file an interrupted run left behind"`
+	Force   bool    `kit:"flag" help:"fetch again over a file that is already there"`
+	Client  *Client `kit:"inject"`
+}
+
+func registerDownload(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "download",
+		Group:   "read",
+		Write:   true,
+		Single:  true,
+		URIType: "download",
+		Summary: "Fetch a paper's PDF, HTML or source to a file",
+		Args:    []kit.Arg{{Name: "ref", Help: "an arXiv id, a versioned id, or an abs URL"}},
+		Long: `Download one file for one paper.
+
+This is the one command that leaves something behind, so it says what it did:
+where the file is, how big it is, how many bytes came over the wire and whether
+it resumed or skipped.
+
+A file that is already there is not fetched again, and --force says to fetch it
+anyway. A download in progress is a .part file, which is what tells a truncated
+PDF apart from a whole one, and --resume continues it with a range request.
+arXiv offers ranges on every file measured, and a server that ignores the range
+starts the download again rather than appending to the wrong bytes.
+
+--extract unpacks a source archive into a directory named after it. arXiv
+serves a submission as a gzipped tar when it has several files and as a single
+gzipped file when it has one, and both are handled. An entry that would write
+outside the directory is refused rather than skipped, and a symlink is skipped
+because nothing in a LaTeX source needs one.
+
+robots.txt disallows /src and /e-print, and arXiv's data policy says full
+content harvesting is not permitted except by arrangement. So this is one paper
+at a time, at the fifteen second pace, for a paper somebody named. There is no
+--all and there is not going to be one.`,
+	}, func(ctx context.Context, in downloadIn, emit func(*Download) error) error {
+		d, err := in.Client.Download(ctx, in.Ref, DownloadOptions{
+			Kind:    in.Kind,
+			Dir:     in.Dir,
+			Path:    in.Out,
+			Extract: in.Extract,
+			Resume:  in.Resume,
+			Force:   in.Force,
+		})
+		if err != nil {
+			return mapErr(err)
+		}
+		return emit(&d)
 	})
 }
 

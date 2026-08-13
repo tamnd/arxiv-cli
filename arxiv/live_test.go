@@ -11,7 +11,11 @@
 package arxiv
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -1217,4 +1221,301 @@ func TestLiveResolveFollowsTheRedirect(t *testing.T) {
 		t.Errorf("target_url is attributed to %q", got.Via["target_url"])
 	}
 	t.Logf("%q -> %s", got.Title, got.TargetURL)
+}
+
+// TestLiveFilesListsWhatArxivServes reads the list without measuring anything,
+// which is the whole point of splitting the two: the list is already on the
+// paper record and costs no extra request.
+func TestLiveFilesListsWhatArxivServes(t *testing.T) {
+	c := liveClient(t)
+	files, err := c.Files(context.Background(), "1706.03762", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) < 2 {
+		t.Fatalf("got %d files, want at least the pdf and the source", len(files))
+	}
+	kinds := map[string]bool{}
+	for _, f := range files {
+		kinds[f.Kind] = true
+		if f.Version == 0 {
+			t.Errorf("%s is at no version; a file belongs to a version", f.Kind)
+		}
+		if !strings.Contains(f.URL, "v") {
+			t.Errorf("%s url %q carries no version", f.Kind, f.URL)
+		}
+		if f.SizeFrom == SizeFromServer {
+			t.Errorf("%s claims a measured size without anybody measuring it", f.Kind)
+		}
+	}
+	for _, kind := range []string{KindPDF, KindSource} {
+		if !kinds[kind] {
+			t.Errorf("no %s in the list", kind)
+		}
+	}
+	t.Logf("%d files: %v", len(files), kinds)
+}
+
+// TestLiveFilesMeasuresTheRealSize is the one that justifies --measure. arXiv's
+// version table says 1,102 KB for this paper, which is the source, and the PDF
+// is twice that, so a record that reported the table figure for the PDF would
+// be wrong by a factor of two.
+func TestLiveFilesMeasuresTheRealSize(t *testing.T) {
+	c := liveClient(t)
+	files, err := c.Files(context.Background(), "1706.03762", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range files {
+		if f.SizeBytes <= 0 {
+			t.Errorf("%s has no size after measuring", f.Kind)
+		}
+		if f.SizeFrom != SizeFromServer {
+			t.Errorf("%s size says it came from %q, want %q", f.Kind, f.SizeFrom, SizeFromServer)
+		}
+		if f.Via["size_bytes"] != SurfaceFiles {
+			t.Errorf("%s size is attributed to %q, want %s", f.Kind, f.Via["size_bytes"], SurfaceFiles)
+		}
+		// The PDF and the source come with a content-disposition and the HTML
+		// does not, because the HTML is a page to look at rather than a file to
+		// save. A download of it falls back to the name built from the id.
+		if f.Filename == "" && f.Kind != KindHTML {
+			t.Errorf("%s has no filename", f.Kind)
+		}
+		if !f.Resumable {
+			t.Errorf("%s did not answer a range request, so --resume has nothing to work with", f.Kind)
+		}
+		if f.ModifiedAt.IsZero() {
+			t.Errorf("%s has no last-modified", f.Kind)
+		}
+		t.Logf("%s: %d bytes, %s, etag %s", f.Kind, f.SizeBytes, f.Filename, f.ETag)
+	}
+
+	var pdf, source *File
+	for i := range files {
+		switch files[i].Kind {
+		case KindPDF:
+			pdf = &files[i]
+		case KindSource:
+			source = &files[i]
+		}
+	}
+	if pdf == nil || source == nil {
+		t.Fatal("this paper stopped serving a pdf or a source")
+	}
+	if pdf.SizeBytes == source.SizeBytes {
+		t.Errorf("the pdf and the source are both %d bytes, which means one of them was not measured", pdf.SizeBytes)
+	}
+	if !strings.HasPrefix(pdf.ETag, "sha256:") {
+		t.Errorf("the pdf etag %q is no longer a checksum", pdf.ETag)
+	}
+}
+
+// TestLiveDownloadWritesThePDF fetches one paper into a temporary directory and
+// checks the bytes are a PDF and the whole of one.
+func TestLiveDownloadWritesThePDF(t *testing.T) {
+	c := liveClient(t)
+	dir := t.TempDir()
+
+	d, err := c.Download(context.Background(), "2401.00001", DownloadOptions{Kind: KindPDF, Dir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Skipped || d.Resumed {
+		t.Errorf("a fresh download into an empty directory was skipped or resumed: %+v", d)
+	}
+	if d.Downloaded != d.SizeBytes {
+		t.Errorf("downloaded %d bytes into a file of %d", d.Downloaded, d.SizeBytes)
+	}
+	if d.Version == 0 {
+		t.Error("the download does not say which version it got")
+	}
+	// arXiv names the file with the version it resolved to, and that is the
+	// name to keep: two downloads of the same paper a year apart are two
+	// different papers.
+	if !strings.Contains(filepath.Base(d.Path), "v") {
+		t.Errorf("the file landed as %q, with no version in the name", filepath.Base(d.Path))
+	}
+	head := make([]byte, 5)
+	f, err := os.Open(d.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = f.Close() }()
+	if _, err := io.ReadFull(f, head); err != nil {
+		t.Fatal(err)
+	}
+	if string(head) != "%PDF-" {
+		t.Errorf("the file starts with %q, which is not a PDF", head)
+	}
+	if _, err := os.Stat(d.Path + ".part"); err == nil {
+		t.Error("the part file is still there after a finished download")
+	}
+
+	// The second run is the one that matters for arXiv's bandwidth: the file is
+	// already there under the name arXiv gave it, and asking again for the same
+	// unversioned id has to find it.
+	again, err := c.Download(context.Background(), "2401.00001", DownloadOptions{Kind: KindPDF, Dir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !again.Skipped {
+		t.Errorf("the second run fetched %d bytes again", again.Downloaded)
+	}
+	if again.Path != d.Path {
+		t.Errorf("the second run found %q, want %q", again.Path, d.Path)
+	}
+}
+
+// TestLiveDownloadResumesAPartFile truncates a finished download back into a
+// part file and checks the rest arrives over a range request rather than the
+// whole thing again.
+func TestLiveDownloadResumesAPartFile(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	dir := t.TempDir()
+
+	first, err := c.Download(ctx, "2401.00001", DownloadOptions{Kind: KindPDF, Dir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	whole, err := os.ReadFile(first.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(whole) < 1<<20 {
+		t.Skipf("%s is only %d bytes, too small to cut in half usefully", first.Path, len(whole))
+	}
+
+	half := len(whole) / 2
+	if err := os.Remove(first.Path); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(first.Path+".part", whole[:half], 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	resumed, err := c.Download(ctx, "2401.00001", DownloadOptions{
+		Kind: KindPDF, Dir: dir, Path: first.Path, Resume: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !resumed.Resumed {
+		t.Fatalf("the download did not resume: %+v", resumed)
+	}
+	if resumed.Downloaded >= int64(len(whole)) {
+		t.Errorf("resuming fetched %d bytes of a %d byte file", resumed.Downloaded, len(whole))
+	}
+	if resumed.SizeBytes != int64(len(whole)) {
+		t.Errorf("the resumed file is %d bytes, want %d", resumed.SizeBytes, len(whole))
+	}
+	got, err := os.ReadFile(resumed.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, whole) {
+		t.Error("the resumed file is a different file, so the range landed in the wrong place")
+	}
+}
+
+// TestLiveDownloadSourceAndExtract fetches a real submission and unpacks it,
+// because a tar built in a test only proves the parser handles what its author
+// thought of.
+func TestLiveDownloadSourceAndExtract(t *testing.T) {
+	c := liveClient(t)
+	dir := t.TempDir()
+
+	d, err := c.Download(context.Background(), "1706.03762", DownloadOptions{
+		Kind: KindSource, Dir: dir, Extract: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.ExtractedFiles < 2 {
+		t.Fatalf("unpacked %d files out of a real submission", d.ExtractedFiles)
+	}
+	entries, err := os.ReadDir(d.ExtractedTo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tex := false
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".tex") {
+			tex = true
+		}
+	}
+	if !tex {
+		t.Errorf("no .tex in %s, which is not a LaTeX submission", d.ExtractedTo)
+	}
+	// Everything unpacked has to be inside the directory it was unpacked into.
+	root, err := filepath.Abs(d.ExtractedTo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = filepath.WalkDir(root, func(path string, _ os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !strings.HasPrefix(path, root) {
+			t.Errorf("%s is outside %s", path, root)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%d files into %s", d.ExtractedFiles, d.ExtractedTo)
+}
+
+// TestLiveDownloadRefusesExtractWithoutSource keeps --extract from quietly
+// doing nothing on a PDF.
+func TestLiveDownloadRefusesExtractWithoutSource(t *testing.T) {
+	c := liveClient(t)
+	_, err := c.Download(context.Background(), "2401.00001", DownloadOptions{
+		Kind: KindPDF, Dir: t.TempDir(), Extract: true,
+	})
+	if err == nil {
+		t.Fatal("--extract on a pdf was accepted")
+	}
+	if errs.KindOf(err) != errs.KindUsage {
+		t.Errorf("kind is %v, want usage: %v", errs.KindOf(err), err)
+	}
+}
+
+// TestLiveDownloadOfAVersionThatIsNotThere checks the 404 comes back as a not
+// found with a sentence on it rather than a generic failure.
+func TestLiveDownloadOfAVersionThatIsNotThere(t *testing.T) {
+	c := liveClient(t)
+	_, err := c.Download(context.Background(), "1706.03762v99", DownloadOptions{
+		Kind: KindPDF, Dir: t.TempDir(),
+	})
+	if err == nil {
+		t.Fatal("v99 was downloaded")
+	}
+	if errs.KindOf(err) != errs.KindNotFound {
+		t.Errorf("kind is %v, want not found: %v", errs.KindOf(err), err)
+	}
+	if !strings.Contains(err.Error(), "version") {
+		t.Errorf("%v does not mention the version", err)
+	}
+}
+
+// TestLiveHTMLIsNotThereForAnOldPaper checks the message names the reason,
+// because a 1997 paper having no LaTeXML rendering is a fact about arXiv and
+// not a fault.
+func TestLiveHTMLIsNotThereForAnOldPaper(t *testing.T) {
+	c := liveClient(t)
+	_, err := c.Download(context.Background(), "hep-th/9711200", DownloadOptions{
+		Kind: KindHTML, Dir: t.TempDir(),
+	})
+	if err == nil {
+		t.Fatal("arxiv now renders HTML for a 1997 paper, which is worth knowing")
+	}
+	if errs.KindOf(err) != errs.KindNotFound {
+		t.Errorf("kind is %v, want not found: %v", errs.KindOf(err), err)
+	}
+	if !strings.Contains(err.Error(), "December 2023") {
+		t.Errorf("%v does not say why there is no HTML", err)
+	}
 }

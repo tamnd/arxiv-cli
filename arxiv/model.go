@@ -37,6 +37,10 @@ const (
 	// SurfaceTrackback is the trackback page, and the only surface anywhere
 	// that points inward: an external page linking to a paper.
 	SurfaceTrackback = "s11" // trackbacks
+	// SurfaceFiles is the bytes themselves, the PDF and the submission source.
+	// It is the only surface with no metadata on it, and the only one this tool
+	// writes to disk.
+	SurfaceFiles = "s12" // the files
 )
 
 // SurfaceNames is what each id is, for `arxiv planes` and for help text.
@@ -51,6 +55,7 @@ var SurfaceNames = map[string]string{
 	SurfaceAuthorID:  "the author identifier page",
 	SurfaceFullText:  "the LaTeXML full text",
 	SurfaceTrackback: "the trackback page",
+	SurfaceFiles:     "the files",
 }
 
 // Envelope is what every record carries about its own provenance.
