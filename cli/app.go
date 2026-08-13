@@ -52,6 +52,13 @@ func defaults(def arxiv.Config) func(*kit.Config) {
 		c.Rate = def.Rate
 		c.Retries = def.Retries
 		c.Timeout = def.Timeout
-		c.UserAgent = def.UserAgent
+		c.UserAgent = userAgent()
 	}
+}
+
+// userAgent is what arXiv sees. It carries the version and the repo, because
+// arXiv asks that a client identify itself and a contactable one is far less
+// likely to be blocked when something goes wrong.
+func userAgent() string {
+	return "arxiv-cli/" + Version + " (+https://github.com/tamnd/arxiv-cli)"
 }

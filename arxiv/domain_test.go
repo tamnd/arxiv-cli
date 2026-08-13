@@ -59,6 +59,7 @@ func TestDomainRegisters(t *testing.T) {
 		"author":     "read",
 		"categories": "read",
 		"id":         "explain",
+		"planes":     "explain",
 	}
 	want := map[string]bool{}
 	for name := range groups {
