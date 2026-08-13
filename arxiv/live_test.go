@@ -926,3 +926,163 @@ func TestLiveRecentPapersAreStillRendered(t *testing.T) {
 	}
 	t.Logf("%d of %d recent papers are rendered", rendered, len(papers))
 }
+
+// TestLiveBibTeXPassesArxivsBytesThrough checks the default. The bytes are
+// arXiv's, so the entry every other tool quotes for this paper is the entry
+// this prints, down to the two lines that end in a space.
+func TestLiveBibTeXPassesArxivsBytesThrough(t *testing.T) {
+	c := liveClient(t)
+	got, err := c.BibTeX(context.Background(), []string{"1706.03762"}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(got, "@misc{") {
+		t.Errorf("entry starts %.10q, want @misc{", got)
+	}
+	for _, want := range []string{"eprint={1706.03762}", "archivePrefix={arXiv}", "primaryClass={cs.CL}"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("entry is missing %q:\n%s", want, got)
+		}
+	}
+	if strings.HasSuffix(got, "\n") {
+		t.Error("the entry carries a trailing newline; whoever prints it adds that")
+	}
+	t.Logf("arXiv's own entry:\n%s", got)
+}
+
+// TestLiveBibTeXDatesTheLatestVersion pins the difference --local exists for.
+// arXiv's key and year follow the newest version, so its entry for a paper
+// everybody cites as 2017 says 2023.
+func TestLiveBibTeXDatesTheLatestVersion(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+
+	served, err := c.BibTeX(ctx, []string{"1706.03762"}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(served, "year={2023}") {
+		t.Logf("arXiv no longer dates this paper 2023, which is worth reading:\n%s", served)
+	}
+
+	local, err := c.BibTeX(ctx, []string{"1706.03762"}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(local, "year={2017}") {
+		t.Errorf("the local entry does not date the first submission:\n%s", local)
+	}
+	if !strings.Contains(local, "@misc{vaswani2017") {
+		t.Errorf("the local key does not carry the first submission year:\n%s", local)
+	}
+}
+
+// TestLiveBibTeXOfAPublishedPaper is the other half of it. arXiv writes @misc
+// for a paper with a publisher DOI and never mentions the journal, and it puts
+// a URL in the doi field.
+func TestLiveBibTeXOfAPublishedPaper(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+
+	served, err := c.BibTeX(ctx, []string{"1207.7214"}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(served, "@misc{") {
+		t.Errorf("arXiv now writes something other than @misc:\n%s", served)
+	}
+	if strings.Contains(served, "journal=") {
+		t.Errorf("arXiv now carries the journal reference, which is worth knowing:\n%s", served)
+	}
+
+	local, err := c.BibTeX(ctx, []string{"1207.7214"}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(local, "@article{") {
+		t.Errorf("the local entry is not @article:\n%s", local)
+	}
+	if !strings.Contains(local, "doi={10.1016/j.physletb.2012.08.020}") {
+		t.Errorf("the local entry does not carry the publisher DOI as a DOI:\n%s", local)
+	}
+}
+
+// TestLiveBibTeXIgnoresTheVersion checks what arXiv does with a versioned id:
+// it answers for the paper. A request for v1 comes back with the entry for the
+// paper, so the version has to be dropped rather than passed on.
+func TestLiveBibTeXIgnoresTheVersion(t *testing.T) {
+	c := liveClient(t)
+	got, err := c.BibTeX(context.Background(), []string{"2401.00001v1"}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got, "eprint={2401.00001}") {
+		t.Errorf("entry:\n%s", got)
+	}
+	if strings.Contains(got, "2401.00001v1") {
+		t.Errorf("arXiv now answers per version, which changes what this command means:\n%s", got)
+	}
+}
+
+// TestLiveBibTeXOfAPaperThatIsNotThere checks the two ways s9 says no. A well
+// formed id that does not exist is a 404 and a malformed one is a 400, and both
+// have to come out as a not found rather than as a parse failure.
+func TestLiveBibTeXOfAPaperThatIsNotThere(t *testing.T) {
+	c := liveClient(t)
+	_, err := c.BibTeX(context.Background(), []string{"2401.99999"}, false)
+	if err == nil {
+		t.Fatal("arxiv answered for a paper that does not exist")
+	}
+	if errs.KindOf(mapErr(err)) != errs.KindNotFound {
+		t.Errorf("kind is %v, want not found: %v", errs.KindOf(mapErr(err)), err)
+	}
+}
+
+// TestLiveCiteReadsInTheOrderAsked checks a bibliography stays in the order
+// somebody wrote it in. The batch read answers in arXiv's order, not ours.
+func TestLiveCiteReadsInTheOrderAsked(t *testing.T) {
+	c := liveClient(t)
+	got, err := c.Cite(context.Background(), []string{"2401.00001", "1706.03762"}, StyleText)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(got), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("%d lines, want 2:\n%s", len(lines), got)
+	}
+	if !strings.Contains(lines[0], "2401.00001") || !strings.Contains(lines[1], "1706.03762") {
+		t.Errorf("the order changed:\n%s", got)
+	}
+}
+
+// TestLiveCiteEveryStyle runs all seven against one real paper. Each one has to
+// name the paper and none of them may come back empty.
+func TestLiveCiteEveryStyle(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	for _, style := range Styles {
+		t.Run(string(style), func(t *testing.T) {
+			got, err := c.Cite(ctx, []string{"1706.03762"}, style)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(got, "1706.03762") {
+				t.Errorf("%s does not name the paper:\n%s", style, got)
+			}
+			t.Logf("%s:\n%s", style, got)
+		})
+	}
+}
+
+// TestLiveCiteOfAPaperThatIsNotThere checks a missing id is an error and not a
+// list one shorter than it should be.
+func TestLiveCiteOfAPaperThatIsNotThere(t *testing.T) {
+	c := liveClient(t)
+	_, err := c.Cite(context.Background(), []string{"1706.03762", "2401.99999"}, StyleAPA)
+	if err == nil {
+		t.Fatal("a missing paper was skipped instead of reported")
+	}
+	if errs.KindOf(mapErr(err)) != errs.KindNotFound {
+		t.Errorf("kind is %v, want not found: %v", errs.KindOf(mapErr(err)), err)
+	}
+}

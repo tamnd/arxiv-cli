@@ -64,6 +64,8 @@ func TestDomainRegisters(t *testing.T) {
 		"categories": "read",
 		"category":   "read",
 		"sets":       "read",
+		"bibtex":     "cite",
+		"cite":       "cite",
 		"id":         "explain",
 		"planes":     "explain",
 	}

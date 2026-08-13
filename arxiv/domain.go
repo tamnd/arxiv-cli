@@ -73,6 +73,8 @@ func (Domain) Register(app *kit.App) {
 	registerNew(app)
 	registerPaper(app)
 	registerFullText(app)
+	registerBibTeX(app)
+	registerCite(app)
 	registerAuthor(app)
 	registerCategories(app)
 	registerCategory(app)
@@ -531,9 +533,105 @@ MathML.`,
 	})
 }
 
-// textOut is where --text writes. It is a variable so a test can read what a
-// run printed.
+// textOut is where the commands that print prose rather than records write. It
+// is a variable so a test can read what a run printed.
 var textOut io.Writer = os.Stdout
+
+// noRecord is the record type of an operation that has no record.
+//
+// Three commands print text and emit nothing: `fulltext --text`, `bibtex` and
+// `cite`. A citation is a text format with a file extension of its own, and
+// `arxiv bibtex 1706.03762 >> refs.bib` has to write BibTeX and not a JSON
+// envelope with BibTeX inside it. The alternative was a record whose only
+// interesting field is the entry, printed as a one column table, which serves
+// nobody.
+type noRecord struct{}
+
+type bibtexIn struct {
+	Refs   []string `kit:"arg,variadic" help:"one or more arXiv ids, versioned ids, or abs URLs"`
+	Local  bool     `kit:"flag" help:"build the entry from the record instead of fetching arXiv's own"`
+	Client *Client  `kit:"inject"`
+}
+
+func registerBibTeX(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "bibtex",
+		Group:   "cite",
+		Single:  true,
+		Summary: "Print arXiv's own BibTeX entry for a paper",
+		Args:    []kit.Arg{{Name: "refs", Help: "one or more arXiv ids", Variadic: true}},
+		Long: `Print a BibTeX entry for each paper.
+
+The bytes are arXiv's own, from arxiv.org/bibtex/<id>, passed through unchanged.
+That is the point: everybody who quotes arXiv quotes this string, and an entry
+rebuilt from the record would disagree with every bibliography that took the
+served one. It is on the fifteen second plane, so it costs fifteen seconds a
+paper the first time and nothing after that.
+
+--local builds the entry from the record instead, and it is a different entry on
+purpose. It dates the paper by its first submission rather than by its latest
+version, so "Attention Is All You Need" comes out as 2017 where arXiv's own
+entry says 2023. It writes @article with the journal reference for a published
+paper, which arXiv never does. It puts the DOI in the doi field, where arXiv
+puts a URL.
+
+The output is text and not a record, because a .bib file is text.`,
+	}, func(ctx context.Context, in bibtexIn, _ func(*noRecord) error) error {
+		out, err := in.Client.BibTeX(ctx, in.Refs, in.Local)
+		if err != nil {
+			return mapErr(err)
+		}
+		_, err = fmt.Fprintln(textOut, out)
+		return err
+	})
+}
+
+type citeIn struct {
+	Refs   []string `kit:"arg,variadic" help:"one or more arXiv ids, versioned ids, or abs URLs"`
+	Style  string   `kit:"flag,short=s" default:"bibtex" enum:"bibtex,apa,mla,chicago,ris,csl-json,text" help:"the citation format"`
+	Client *Client  `kit:"inject"`
+}
+
+func registerCite(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "cite",
+		Group:   "cite",
+		Single:  true,
+		Summary: "Format a citation in bibtex, apa, mla, chicago, ris, csl-json or text",
+		Args:    []kit.Arg{{Name: "refs", Help: "one or more arXiv ids", Variadic: true}},
+		Long: `Format a citation from the record.
+
+Every style is built here and none of them is fetched, so this is two requests
+on the three second plane whatever style was asked for. The read is at meta
+depth because that is where the structured author names live, and a citation
+that cannot write "Vaswani, A." is not a citation.
+
+csl-json is the one worth knowing about. It feeds every reference manager, it
+comes out as one array however many papers were asked for, and because it is
+built from the record rather than from the BibTeX it carries the abstract, the
+categories and the version that BibTeX drops.
+
+Two things no style here does. The title is printed as arXiv holds it, so APA
+does not get its sentence case, because lowercasing "Standard Model Higgs boson"
+correctly means knowing which words are names. A name arXiv only published as
+one string is printed as that string rather than split into a surname and
+initials, because that split is wrong for "van der Waals" and for "The ATLAS
+Collaboration".
+
+The output is text and not a record, because a citation is text.`,
+	}, func(ctx context.Context, in citeIn, _ func(*noRecord) error) error {
+		style, err := ParseStyle(in.Style)
+		if err != nil {
+			return err
+		}
+		out, err := in.Client.Cite(ctx, in.Refs, style)
+		if err != nil {
+			return mapErr(err)
+		}
+		_, err = fmt.Fprintln(textOut, out)
+		return err
+	})
+}
 
 type authorIn struct {
 	Ref    string  `kit:"arg" help:"an author name, or an arXiv author identifier with --id"`

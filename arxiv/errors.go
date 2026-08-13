@@ -26,15 +26,18 @@ func mapErr(err error) error {
 		return errs.Wrap(errs.KindGeneric, err, "arxiv returned an error: %s", apiErr.Message)
 	}
 
+	// The kind is added and the message is left alone. Wrapping with the error's
+	// own text as the message would print the sentence twice, which is how
+	// "2401.99999: not found: 2401.99999: not found" happens.
 	switch {
 	case errors.Is(err, ErrNotFound):
-		return errs.Wrap(errs.KindNotFound, err, "%s", err.Error())
+		return &errs.Error{Kind: errs.KindNotFound, Err: err}
 	case errors.Is(err, context.DeadlineExceeded):
-		return errs.Wrap(errs.KindNetwork, err, "%s", err.Error())
+		return &errs.Error{Kind: errs.KindNetwork, Err: err}
 	}
 	var netErr net.Error
 	if errors.As(err, &netErr) {
-		return errs.Wrap(errs.KindNetwork, err, "%s", err.Error())
+		return &errs.Error{Kind: errs.KindNetwork, Err: err}
 	}
 	return err
 }
