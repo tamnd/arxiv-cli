@@ -2,6 +2,8 @@ package arxiv
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -70,6 +72,7 @@ func (Domain) Register(app *kit.App) {
 	registerList(app)
 	registerNew(app)
 	registerPaper(app)
+	registerFullText(app)
 	registerAuthor(app)
 	registerCategories(app)
 	registerCategory(app)
@@ -471,6 +474,66 @@ named in the missed field rather than left as a zero.`,
 		return emit(&paper)
 	})
 }
+
+type fullTextIn struct {
+	Ref      string  `kit:"arg" help:"an arXiv id, a versioned id, or an abs URL"`
+	Sections bool    `kit:"flag" help:"the section tree with no body text, which is a table of contents"`
+	Text     bool    `kit:"flag" help:"write the body to stdout as plain text in reading order"`
+	Section  string  `kit:"flag" help:"one section and its children, by id, such as S3 or S3.SS1"`
+	Refs     bool    `kit:"flag" help:"the bibliography instead of the body"`
+	Client   *Client `kit:"inject"`
+}
+
+func registerFullText(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "fulltext",
+		Group:   "read",
+		Single:  true,
+		URIType: "fulltext",
+		Summary: "Read the LaTeXML full text of a paper",
+		Args:    []kit.Arg{{Name: "ref", Help: "an arXiv id, a versioned id, or an abs URL"}},
+		Long: `Read the LaTeXML rendering of a paper.
+
+arXiv renders LaTeX submissions to HTML at arxiv.org/html/<id>v<n>, and that
+rendering is the only place arXiv publishes author affiliations, a section tree
+or the body of a paper at all.
+
+The read is the abstract page and then the rendering, because has_html is on the
+abstract page and it is the only honest way to know whether a rendering exists.
+That is two requests on the fifteen second plane, so the command takes half a
+minute the first time and nothing at all the second: a rendering never changes,
+so it is cached for a month.
+
+A paper arXiv never rendered exits 7 and says so. arXiv renders papers submitted
+since December 2023 and some earlier ones, and there is no pattern to the
+earlier ones worth guessing at.
+
+Maths comes back as the LaTeX the author wrote, taken from the alttext
+attribute, because a downstream reader can parse that and cannot parse rendered
+MathML.`,
+	}, func(ctx context.Context, in fullTextIn, emit func(*FullText) error) error {
+		full, err := in.Client.FullText(ctx, in.Ref, FullTextOptions{
+			Sections: in.Sections,
+			Section:  in.Section,
+			Refs:     in.Refs,
+		})
+		if err != nil {
+			return mapErr(err)
+		}
+		// --text is the one output this tool writes as text rather than as a
+		// record. A body is prose and a record of prose is a record with one
+		// enormous field in it, which is worse to read and worse to pipe.
+		if in.Text {
+			_, err := fmt.Fprintln(textOut, full.PlainText())
+			return err
+		}
+		return emit(&full)
+	})
+}
+
+// textOut is where --text writes. It is a variable so a test can read what a
+// run printed.
+var textOut io.Writer = os.Stdout
 
 type authorIn struct {
 	Ref    string  `kit:"arg" help:"an author name, or an arXiv author identifier with --id"`

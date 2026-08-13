@@ -15,6 +15,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tamnd/any-cli/kit/errs"
 )
 
 // liveClient is a real client at the default API pace.
@@ -780,4 +782,147 @@ func TestLiveAuthorNameSearchIsNotAPerson(t *testing.T) {
 		t.Error("no warning on a name match")
 	}
 	t.Logf("%d papers match the name", p.PaperCount)
+}
+
+// TestLiveFullTextReadsARendering reads a paper arXiv rendered and checks the
+// parts that only the rendering has. The paper is a fixed one, so a change in
+// the markup shows up here rather than in a user's terminal.
+func TestLiveFullTextReadsARendering(t *testing.T) {
+	full, err := liveClient(t).FullText(context.Background(), "2401.00001", FullTextOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if full.Title == "" || full.Abstract == "" {
+		t.Errorf("title %q, abstract %.40q", full.Title, full.Abstract)
+	}
+	if len(full.Sections) == 0 || full.Words < 1000 {
+		t.Errorf("%d top level sections and %d words", len(full.Sections), full.Words)
+	}
+	if full.LicenseName == "" || full.Stamp == "" {
+		t.Errorf("the info box stopped carrying the licence and the watermark: %q %q", full.LicenseName, full.Stamp)
+	}
+	if len(full.Authors) == 0 || full.Authors[0].Affiliation == "" {
+		t.Errorf("affiliations are gone from the rendering: %+v", full.Authors)
+	}
+	if !contains(full.Surfaces, SurfaceFullText) {
+		t.Errorf("surfaces: %v", full.Surfaces)
+	}
+	t.Logf("%d sections, %d words, %d references", full.SectionCount, full.Words, len(full.References))
+}
+
+// TestLiveFullTextRefusesAPaperWithNoRendering checks the refusal path. A 1997
+// paper has no LaTeXML rendering and never will, so the answer is exit 7 with a
+// sentence saying why, not a 404 to guess at.
+func TestLiveFullTextRefusesAPaperWithNoRendering(t *testing.T) {
+	_, err := liveClient(t).FullText(context.Background(), "hep-th/9711200", FullTextOptions{})
+	if err == nil {
+		t.Fatal("arXiv has rendered a 1997 paper, which is news")
+	}
+	if errs.KindOf(err) != errs.KindUnsupported {
+		t.Errorf("kind: got %v, want unsupported: %v", errs.KindOf(err), err)
+	}
+	if !strings.Contains(err.Error(), "December 2023") {
+		t.Errorf("the message does not say when renderings start: %v", err)
+	}
+}
+
+// TestLiveFullTextSectionIDsAreStable checks that the ids --section takes are
+// the ids the page prints. A tree whose ids did not resolve would be a table of
+// contents nobody could use.
+func TestLiveFullTextSectionIDsAreStable(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	toc, err := c.FullText(ctx, "2401.00001", FullTextOptions{Sections: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(toc.Sections) == 0 {
+		t.Fatal("no sections")
+	}
+	for _, s := range toc.Sections {
+		if s.Text != "" {
+			t.Errorf("%s kept its prose in a table of contents", s.ID)
+		}
+	}
+	id := toc.Sections[len(toc.Sections)-1].ID
+
+	one, err := c.FullText(ctx, "2401.00001", FullTextOptions{Section: id})
+	if err != nil {
+		t.Fatalf("section %s: %v", id, err)
+	}
+	if len(one.Sections) != 1 || one.Sections[0].ID != id {
+		t.Errorf("asked for %s and got %+v", id, one.Sections)
+	}
+}
+
+// TestLiveDepthTextPutsAffiliationsOnAPaper is the other half: the same
+// rendering read as part of a paper, where the affiliations land on the authors
+// the metadata surfaces already named.
+func TestLiveDepthTextPutsAffiliationsOnAPaper(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+
+	p, err := c.PaperAt(ctx, "2401.00001", PaperOptions{Depth: DepthText})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(p.Sections) == 0 {
+		t.Error("a text read came back with no sections")
+	}
+	if !contains(p.Surfaces, SurfaceFullText) {
+		t.Errorf("surfaces: %v", p.Surfaces)
+	}
+	affiliated := 0
+	for _, a := range p.Authors {
+		if a.Affiliation != "" {
+			affiliated++
+		}
+	}
+	if affiliated == 0 {
+		t.Errorf("no author of %d picked up an affiliation: %+v", len(p.Authors), p.Authors)
+	}
+	if len(p.Missed) != 0 {
+		t.Errorf("a rendered paper at depth text missed %v", p.Missed)
+	}
+
+	// A paper with no rendering says so instead of looking like a failed read.
+	old, err := c.PaperAt(ctx, "hep-th/9711200", PaperOptions{Depth: DepthText})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(old.Missed) == 0 || !strings.Contains(strings.Join(old.Missed, " "), "no LaTeXML rendering") {
+		t.Errorf("missed: %v", old.Missed)
+	}
+}
+
+// TestLiveRecentPapersAreStillRendered checks the assumption the whole surface
+// rests on: papers announced this week have HTML. If arXiv turned rendering off,
+// every fulltext read would start refusing and this says so first.
+func TestLiveRecentPapersAreStillRendered(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+
+	papers, err := c.Search(ctx, SearchOptions{
+		Categories: []string{"cs.CL"},
+		Sort:       "submitted",
+		Order:      "desc",
+		Limit:      5,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := 0
+	for _, p := range papers {
+		full, err := c.PaperAt(ctx, p.ID, PaperOptions{Depth: DepthFull})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if full.HasHTML {
+			rendered++
+		}
+	}
+	if rendered == 0 {
+		t.Errorf("none of %d papers announced this week has an HTML rendering", len(papers))
+	}
+	t.Logf("%d of %d recent papers are rendered", rendered, len(papers))
 }

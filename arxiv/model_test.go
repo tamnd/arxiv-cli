@@ -118,16 +118,22 @@ func TestDepthMissed(t *testing.T) {
 	}
 }
 
-// TestAnnotateDepthText says out loud that the full text surface is not built
-// yet, which is better than a record that looks complete and is not.
+// TestAnnotateDepthText checks the deepest read leaves nothing behind, and that
+// a paper arXiv never rendered says so rather than showing an empty tree.
 func TestAnnotateDepthText(t *testing.T) {
-	p := Paper{ID: "1706.03762"}
+	p := Paper{ID: "2601.00086", HasHTML: true}
 	annotateDepth(&p, DepthText)
 	if p.Depth != "text" {
 		t.Errorf("Depth: got %q", p.Depth)
 	}
-	if len(p.Missed) != 1 || !strings.Contains(p.Missed[0], "arxiv fulltext 1706.03762") {
+	if len(p.Missed) != 0 {
 		t.Errorf("Missed: got %v", p.Missed)
+	}
+
+	old := Paper{ID: "hep-th/9711200"}
+	annotateDepth(&old, DepthText)
+	if len(old.Missed) != 1 || !strings.Contains(old.Missed[0], "no LaTeXML rendering") {
+		t.Errorf("Missed: got %v", old.Missed)
 	}
 }
 
