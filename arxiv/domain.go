@@ -67,6 +67,8 @@ func (Domain) Register(app *kit.App) {
 
 	registerSearch(app)
 	registerCount(app)
+	registerList(app)
+	registerNew(app)
 	registerPaper(app)
 	registerAuthor(app)
 	registerCategories(app)
@@ -322,6 +324,113 @@ The request asks for one result rather than none, because max_results=0 answers
 			return mapErr(err)
 		}
 		return emit(&count)
+	})
+}
+
+// listIn is the flag set of `arxiv list`. --skip and --show keep arXiv's own
+// names, because they are what the URL carries and what the page prints, and a
+// user who has the page open should not have to translate.
+type listIn struct {
+	Category string  `kit:"arg" help:"a category code such as cs.CL"`
+	Month    string  `kit:"arg" help:"the month to list, as 2026-01"`
+	Recent   bool    `kit:"flag" help:"the last few announcement days instead of a month"`
+	Skip     int     `kit:"flag" help:"how many entries to skip"`
+	Show     int     `kit:"flag" help:"entries per page: 25, 50, 100, 250, 500, 1000 or 2000"`
+	All      bool    `kit:"flag" help:"walk every page at the fifteen second pace"`
+	Client   *Client `kit:"inject"`
+}
+
+func registerList(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "list",
+		Group:   "read",
+		List:    true,
+		URIType: "paper",
+		Summary: "Browse a category listing by month",
+		Args: []kit.Arg{
+			{Name: "category", Help: "a category code such as cs.CL"},
+			{Name: "month", Help: "the month to list, as 2026-01", Optional: true},
+		},
+		Long: `Browse a category listing by month.
+
+This is arXiv's own listing page rather than a search: it is every paper filed
+under a category in one month, in arXiv's own order, which is what a person
+browsing the archive sees. A search of the same category and month answers a
+different question and returns a different set in a different order.
+
+The month is 2026-01. The four digit form 2601 that older guides document is
+gone, and arXiv answers it with a 404, so it is refused here with the form to
+type instead. With no month and no --recent this lists the recent submissions.
+
+Paging is --skip and --show, which are arXiv's own parameters. arXiv accepts
+25, 50, 100, 250, 500, 1000 and 2000 entries a page and answers anything else
+with an HTTP 400, so a --show it would refuse is refused here first.
+
+--all walks every page. This is the fifteen second plane, so the walk says how
+many requests it will make and how long that is before it starts. There is no
+ten thousand result window here, which makes this the only way to read a whole
+month of a busy category.
+
+A listing row has no abstract and no submission time. Each record names what it
+is missing and which command reads it.`,
+	}, func(ctx context.Context, in listIn, emit func(*Paper) error) error {
+		err := in.Client.ListStream(ctx, ListOptions{
+			Category: in.Category,
+			Month:    in.Month,
+			Recent:   in.Recent,
+			Skip:     in.Skip,
+			Show:     in.Show,
+			All:      in.All,
+		}, emit)
+		if err != nil {
+			return mapErr(err)
+		}
+		return nil
+	})
+}
+
+type newIn struct {
+	Category string   `kit:"arg" help:"a category code such as cs.CL"`
+	Type     []string `kit:"flag" help:"only this announce type, repeatable: new, cross, replace, replace-cross"`
+	NewOnly  bool     `kit:"flag,name=new-only" help:"only first announcements, the same as --type new"`
+	Client   *Client  `kit:"inject"`
+}
+
+func registerNew(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "new",
+		Group:   "read",
+		List:    true,
+		URIType: "announcement",
+		Summary: "Read today's announcement for a category",
+		Args:    []kit.Arg{{Name: "category", Help: "a category code such as cs.CL"}},
+		Long: `Read today's announcement for a category, off arXiv's RSS feed.
+
+Every item carries an announce type, which is the one field no other arXiv
+surface publishes: new is a first announcement, cross is a paper primarily in
+another category, replace is a new version of a paper already announced here,
+and replace-cross is a new version of a cross listed one.
+
+That distinction is the reason this is a command rather than a feed dump. The
+cs.CL feed read on 2026-08-13 had 139 items and 47 of them were replacements,
+so a reader who cannot filter is being handed a third of a day's noise.
+--type takes any of the four and repeats, and --new-only is the short way to
+say --type new. The count under the table is of the whole feed, not of what
+survived the filter.
+
+arXiv announces on weekdays and the feed says so itself, so a read on a Sunday
+returns Friday's announcement rather than nothing, and the cached copy is kept
+until the feed's own pubDate says the next announcement is due.`,
+	}, func(ctx context.Context, in newIn, emit func(*Announcement) error) error {
+		types := in.Type
+		if in.NewOnly {
+			types = append(types, AnnounceNew)
+		}
+		items, err := in.Client.Announcements(ctx, FeedOptions{Category: in.Category, Types: types})
+		if err != nil {
+			return mapErr(err)
+		}
+		return emitAll(items, emit)
 	})
 }
 
