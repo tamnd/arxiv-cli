@@ -80,7 +80,7 @@ type Predicate struct {
 
 // Predicates is the whole table, in the order doc 04 section 3.1 gives it.
 var Predicates = []Predicate{
-	{Authored, []string{KindName, KindAuthor}, []string{KindPaper}, []string{"s1", "s2", "s4", "s5", "s6", "s8"},
+	{Authored, []string{KindName, KindAuthor}, []string{KindPaper}, []string{"s1", "s2", "s3", "s4", "s5", "s6", "s8"},
 		"the paper lists this name as an author, in this position"},
 	{IdentifiedAs, []string{KindName}, []string{KindAuthor}, []string{"s8"},
 		"arxiv's own author page ties this name to this registered person"},
@@ -88,11 +88,11 @@ var Predicates = []Predicate{
 		"the author page publishes this ORCID"},
 	{AffiliatedWith, []string{KindName}, []string{KindExternal}, []string{"s10"},
 		"the rendered paper gives this affiliation for this author"},
-	{PrimaryCategory, []string{KindPaper}, []string{KindCategory}, []string{"s1", "s2", "s3", "s6"},
+	{PrimaryCategory, []string{KindPaper}, []string{KindCategory}, []string{"s1", "s2", "s3", "s4", "s5", "s6"},
 		"the category the paper was submitted to"},
 	{InCategory, []string{KindPaper}, []string{KindCategory}, []string{"s1", "s2", "s3", "s4", "s5", "s6"},
 		"every category on the paper, primary and cross listed alike"},
-	{CrossListed, []string{KindPaper}, []string{KindCategory}, []string{"s1", "s2", "s3", "s6"},
+	{CrossListed, []string{KindPaper}, []string{KindCategory}, []string{"s1", "s2", "s3", "s4", "s5", "s6"},
 		"the categories that are not the primary one"},
 	{SubcategoryOf, []string{KindCategory}, []string{KindArchive}, []string{"s7"},
 		"the taxonomy puts this category under this archive"},
@@ -110,8 +110,8 @@ var Predicates = []Predicate{
 		"a DOI for this paper, arXiv's own or the publisher's"},
 	{LicensedUnder, []string{KindPaper}, []string{KindLicense}, []string{"s2", "s3", "s6"},
 		"the license the submitter chose"},
-	{SubmittedBy, []string{KindName}, []string{KindPaper}, []string{"s2"},
-		"the submitter arXivRaw names, who is one of the authors and often not the first"},
+	{SubmittedBy, []string{KindName}, []string{KindPaper}, []string{"s2", "s3"},
+		"the submitter arXivRaw and the abstract page name, who is one of the authors and often not the first"},
 	{AnnouncedAs, []string{KindPaper}, []string{KindCategory}, []string{"s6"},
 		"the feed announced the paper in this category, with new, cross or replace as the note"},
 	{LinkedBy, []string{KindExternal}, []string{KindPaper}, []string{"s11"},

@@ -83,6 +83,8 @@ func (Domain) Register(app *kit.App) {
 	registerCategory(app)
 	registerSets(app)
 	registerID(app)
+	registerEdges(app)
+	registerGraph(app)
 	registerPredicates(app)
 	registerPlanes(app)
 }

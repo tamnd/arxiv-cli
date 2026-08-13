@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/tamnd/any-cli/kit/errs"
+	"github.com/tamnd/arxiv-cli/pkg/graph"
 )
 
 // liveClient is a real client at the default API pace.
@@ -1518,4 +1519,186 @@ func TestLiveHTMLIsNotThereForAnOldPaper(t *testing.T) {
 	if !strings.Contains(err.Error(), "December 2023") {
 		t.Errorf("%v does not say why there is no HTML", err)
 	}
+}
+
+// ─── the claims ──────────────────────────────────────────────────────────────
+
+// TestLiveEdgesCostWhatTheReadCosts is the claim the plane is built on: the
+// edges come out of the record the read already built, so a claim set costs one
+// paper read and not one request a claim.
+func TestLiveEdgesCostWhatTheReadCosts(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	const id = "1706.03762"
+
+	meta, err := c.Edges(ctx, id, EdgeOptions{Depth: DepthMeta})
+	if err != nil {
+		t.Fatalf("meta: %v", err)
+	}
+	if len(meta) < 12 {
+		t.Errorf("a meta read asserted %d claims, and two requests should carry more than that", len(meta))
+	}
+
+	full, err := c.Edges(ctx, id, EdgeOptions{Depth: DepthFull})
+	if err != nil {
+		t.Fatalf("full: %v", err)
+	}
+	if len(full) <= len(meta) {
+		t.Errorf("full asserted %d claims and meta asserted %d; a deeper read is a superset", len(full), len(meta))
+	}
+
+	by := map[string]int{}
+	for _, e := range full {
+		by[e.Predicate]++
+		if _, ok := graph.Lookup(e.Predicate); !ok {
+			t.Errorf("%q is not in the table", e.Predicate)
+		}
+		if e.Source == "" || e.Surface == "" {
+			t.Errorf("%s from %s does not say who asserted it", e.Predicate, e.From)
+		}
+	}
+	// The version history, the licence, the submitter and the files are what
+	// the two extra requests are for.
+	for _, p := range []string{graph.HasVersion, graph.Supersedes, graph.LicensedUnder,
+		graph.SubmittedBy, graph.HasFile} {
+		if by[p] == 0 {
+			t.Errorf("a full read asserted no %s claims", p)
+		}
+	}
+	t.Logf("meta %d claims, full %d claims: %v", len(meta), len(full), by)
+}
+
+// TestLiveCitesOnlyComesOffTheRendering is the rule that keeps the citation set
+// honest. arXiv publishes no citation graph, so cites is written from the
+// LaTeXML bibliography and nowhere else, and the coverage says what it missed.
+func TestLiveCitesOnlyComesOffTheRendering(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	const id = "1706.03762"
+
+	full, err := c.Edges(ctx, id, EdgeOptions{Depth: DepthFull})
+	if err != nil {
+		t.Fatalf("full: %v", err)
+	}
+	for _, e := range full {
+		if e.Predicate == graph.Cites {
+			t.Errorf("a cites claim off a metadata read: %s", e.To)
+		}
+	}
+
+	var buf bytes.Buffer
+	cfg := DefaultConfig()
+	cfg.Log = &buf
+	text, err := NewClient(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edges, err := text.Edges(ctx, id, EdgeOptions{Depth: DepthText})
+	if err != nil {
+		t.Fatalf("text: %v", err)
+	}
+	cites := 0
+	for _, e := range edges {
+		if e.Predicate != graph.Cites {
+			continue
+		}
+		cites++
+		if e.Surface != SurfaceFullText {
+			t.Errorf("a cites claim came from %s, and only the rendering may assert it", e.Surface)
+		}
+	}
+	if cites == 0 {
+		t.Error("the rendering of 1706.03762 stopped yielding citations")
+	}
+	// A citation set that looks complete and is not is worse than one that
+	// admits what it missed, so the fraction is reported rather than inferred.
+	if !strings.Contains(buf.String(), "bibliography entries") {
+		t.Errorf("the read said %q, and none of it is the coverage", buf.String())
+	}
+	t.Logf("%d cites claims; %s", cites, strings.TrimSpace(buf.String()))
+}
+
+// TestLiveEdgesOfAPaperWithAJournalRef checks the two claims 1706.03762 cannot
+// make, because it was never published in a journal.
+func TestLiveEdgesOfAPaperWithAJournalRef(t *testing.T) {
+	c := liveClient(t)
+	edges, err := c.Edges(context.Background(), "1207.7214", EdgeOptions{Depth: DepthMeta})
+	if err != nil {
+		t.Fatalf("edges: %v", err)
+	}
+	by := map[string][]graph.Edge{}
+	for _, e := range edges {
+		by[e.Predicate] = append(by[e.Predicate], e)
+	}
+	if len(by[graph.PublishedIn]) != 1 {
+		t.Errorf("published_in: got %d claims for a paper in Phys.Lett. B716", len(by[graph.PublishedIn]))
+	}
+	// arXiv's own DOI and the publisher's are two claims about the same paper,
+	// and the note is what tells them apart.
+	if len(by[graph.HasDOI]) != 2 {
+		t.Errorf("has_doi: got %d claims, want arXiv's own and the publisher's", len(by[graph.HasDOI]))
+	}
+	// The discovery paper has nearly three thousand authors and arXiv publishes
+	// one name for them: "The ATLAS Collaboration". So the claim set has one
+	// authored row, and it names the collaboration rather than a person. A tool
+	// that invented three thousand rows here would be inventing them.
+	if len(by[graph.Authored]) != 1 {
+		t.Fatalf("authored: got %d claims, and arxiv publishes the collaboration as one name", len(by[graph.Authored]))
+	}
+	if got := by[graph.Authored][0]; got.Note != "The ATLAS Collaboration" || got.Position != 1 {
+		t.Errorf("authored: got %q in position %d", got.Note, got.Position)
+	}
+}
+
+// TestLiveWalkStaysInsideItsBudget is the rule the walk is built on. The budget
+// is in requests, it is checked before a read rather than before a request, and
+// what went unread is printed rather than left to be inferred from a short
+// answer.
+func TestLiveWalkStaysInsideItsBudget(t *testing.T) {
+	var buf bytes.Buffer
+	cfg := DefaultConfig()
+	cfg.Log = &buf
+	c, err := NewClient(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	edges, err := c.Walk(context.Background(), "1706.03762", WalkOptions{
+		Hops: 2, Depth: DepthMeta, Names: true, Limit: 5, Budget: 6,
+	})
+	if err != nil {
+		t.Fatalf("walk: %v", err)
+	}
+	if len(edges) == 0 {
+		t.Fatal("the walk came back with nothing")
+	}
+	said := buf.String()
+	if !strings.Contains(said, "went unread") {
+		t.Errorf("a walk that ran out of budget said %q", said)
+	}
+	t.Logf("%d claims on a budget of six; %s", len(edges), strings.TrimSpace(said))
+}
+
+// TestLiveWalkExpandsTheTaxonomy checks the second hop reaches something the
+// first one only named. The categories on a paper are codes until the taxonomy
+// says what is above them, and the taxonomy is one cached table however many
+// categories are asked about.
+func TestLiveWalkExpandsTheTaxonomy(t *testing.T) {
+	c := liveClient(t)
+	edges, err := c.Walk(context.Background(), "1706.03762", WalkOptions{
+		Hops: 2, Depth: DepthMeta, Budget: 25,
+	})
+	if err != nil {
+		t.Fatalf("walk: %v", err)
+	}
+	by := map[string]int{}
+	for _, e := range edges {
+		by[e.Predicate]++
+	}
+	for _, p := range []string{graph.SubcategoryOf, graph.PartOfGroup, graph.InSet} {
+		if by[p] == 0 {
+			t.Errorf("the second hop asserted no %s claims", p)
+		}
+	}
+	t.Logf("two hops: %v", by)
 }
