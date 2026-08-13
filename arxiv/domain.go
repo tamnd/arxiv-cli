@@ -2,6 +2,8 @@ package arxiv
 
 import (
 	"context"
+	"os"
+	"time"
 
 	"github.com/tamnd/any-cli/kit"
 	"github.com/tamnd/any-cli/kit/errs"
@@ -40,8 +42,26 @@ Search arXiv and pull paper metadata, authors, and abstracts. No API key require
 	}
 }
 
-// Register installs the client factory and every operation onto app.
+// htmlRateFlag is the name of the second pacing flag. arXiv's two planes are
+// five times apart, so one --rate cannot serve both.
+const htmlRateFlag = "html-rate"
+
+// Register installs the client factory, the extra global flag, and every
+// operation onto app.
 func (Domain) Register(app *kit.App) {
+	// The flag binds to a variable owned by this registration rather than to
+	// package state, so two apps in one process do not share a pace.
+	htmlRate := HTMLPlane.Pace
+	app.GlobalFlags(func(f *kit.FlagSet) {
+		f.DurationVar(&htmlRate, htmlRateFlag, HTMLPlane.Pace,
+			"minimum gap between arxiv.org requests (floor "+HTMLPlane.Floor.String()+")")
+	})
+	app.Finalize(func(c *kit.Config) {
+		if c.Extra == nil {
+			c.Extra = map[string]string{}
+		}
+		c.Extra[htmlRateFlag] = htmlRate.String()
+	})
 	app.SetClient(newClient)
 
 	registerSearch(app)
@@ -49,25 +69,59 @@ func (Domain) Register(app *kit.App) {
 	registerAuthor(app)
 	registerCategories(app)
 	registerID(app)
+	registerPlanes(app)
 }
 
 // newClient is the factory kit calls once per run. An unset framework flag
 // leaves the library default in place.
 func newClient(_ context.Context, cfg kit.Config) (any, error) {
-	c := NewClient(DefaultConfig())
+	c := DefaultConfig()
 	if cfg.UserAgent != "" {
-		c.userAgent = cfg.UserAgent
+		c.UserAgent = cfg.UserAgent
 	}
 	if cfg.Rate > 0 {
-		c.rate = cfg.Rate
+		c.Rate = cfg.Rate
+	}
+	if d, err := htmlRateOf(cfg); err != nil {
+		return nil, err
+	} else if d > 0 {
+		c.HTMLRate = d
 	}
 	if cfg.Retries > 0 {
-		c.retries = cfg.Retries
+		c.Retries = cfg.Retries
 	}
 	if cfg.Timeout > 0 {
-		c.httpClient.Timeout = cfg.Timeout
+		c.Timeout = cfg.Timeout
 	}
-	return c, nil
+	c.CacheDir = cfg.CacheDir
+	c.NoCache = cfg.NoCache
+	c.Verbose = cfg.Verbose
+	if cfg.Verbose > 0 {
+		c.Log = os.Stderr
+	}
+
+	client, err := NewClient(c)
+	if err != nil {
+		// A pace under its floor is a flag the user typed, so it is a usage
+		// error rather than a failure to build a client.
+		return nil, errs.Usage("%s", err.Error())
+	}
+	return client, nil
+}
+
+// htmlRateOf reads the --html-rate value the finalize hook parked on the
+// config. An unparseable value cannot come from the flag parser, so it can only
+// come from a caller building a Config by hand, and it says so.
+func htmlRateOf(cfg kit.Config) (time.Duration, error) {
+	raw, ok := cfg.Extra[htmlRateFlag]
+	if !ok || raw == "" {
+		return 0, nil
+	}
+	d, err := time.ParseDuration(raw)
+	if err != nil {
+		return 0, errs.Usage("--%s %q is not a duration", htmlRateFlag, raw)
+	}
+	return d, nil
 }
 
 type searchIn struct {

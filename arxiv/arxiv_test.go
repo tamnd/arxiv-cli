@@ -62,11 +62,21 @@ const emptyFeed = `<?xml version="1.0" encoding="UTF-8"?>
   <opensearch:itemsPerPage>10</opensearch:itemsPerPage>
 </feed>`
 
-func newTestClient(ts *httptest.Server) *Client {
-	cfg := DefaultConfig()
-	cfg.Rate = 0 // no pacing in tests
-	c := NewClient(cfg)
+// newTestClient points a client at a local server.
+//
+// The plane table is replaced rather than bypassed. Pacing is chosen by host, so
+// a client with no plane for 127.0.0.1 refuses to fetch from one, and that is
+// the behaviour worth keeping: the test server gets its own plane at zero pace
+// instead of a hole in the rule.
+func newTestClient(t *testing.T, ts *httptest.Server) *Client {
+	t.Helper()
+	c, err := NewClient(DefaultConfig())
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
 	c.httpClient = ts.Client()
+	c.planes = []Plane{{Name: "test", Hosts: []string{"127.0.0.1", "localhost", "[::1]"}}}
+	c.limiters = map[string]*limiter{"test": newLimiter(0)}
 	return c
 }
 
@@ -77,8 +87,8 @@ func TestSearch(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := newTestClient(ts)
-	feed, err := c.getXML(context.Background(), ts.URL+"/api/query?search_query=all:attention")
+	c := newTestClient(t, ts)
+	feed, err := c.getXML(context.Background(), ts.URL+"/api/query?search_query=all:attention", 0)
 	if err != nil {
 		t.Fatalf("getXML error: %v", err)
 	}
@@ -120,8 +130,8 @@ func TestPaperFound(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := newTestClient(ts)
-	feed, err := c.getXML(context.Background(), ts.URL+"?id_list=1706.03762")
+	c := newTestClient(t, ts)
+	feed, err := c.getXML(context.Background(), ts.URL+"?id_list=1706.03762", 0)
 	if err != nil {
 		t.Fatalf("getXML error: %v", err)
 	}
@@ -138,8 +148,8 @@ func TestPaperNotFound(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := newTestClient(ts)
-	feed, err := c.getXML(context.Background(), ts.URL+"?id_list=9999.99999")
+	c := newTestClient(t, ts)
+	feed, err := c.getXML(context.Background(), ts.URL+"?id_list=9999.99999", 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
