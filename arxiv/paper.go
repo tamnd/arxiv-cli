@@ -9,6 +9,10 @@ import (
 	"github.com/tamnd/arxiv-cli/pkg/axid"
 )
 
+// estimateFrom is how many papers a deep read has to cover before the cost is
+// announced. Ten at --depth full is two and a half minutes.
+const estimateFrom = 10
+
 // PaperOptions controls how deeply a paper is read.
 type PaperOptions struct {
 	// Depth is how many surfaces to cross. Empty means meta, because a single
@@ -93,6 +97,12 @@ func (c *Client) papersAt(ctx context.Context, ids []axid.ID, depth Depth) ([]Pa
 
 	if depth == DepthQuick {
 		return papers, nil
+	}
+	// A deep read of a long list is minutes of pacing, and finding that out by
+	// watching nothing happen is not the way to find it out. The threshold is
+	// where the wait stops being a pause and starts being a wait.
+	if len(papers) > estimateFrom && depth.CrossesHTMLPlane() {
+		c.notice("%s", EstimateRead(len(papers), depth))
 	}
 	for i := range papers {
 		if err := c.deepen(ctx, &papers[i], depth); err != nil {
