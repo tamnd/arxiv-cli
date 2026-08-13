@@ -14,10 +14,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
-
-	"github.com/tamnd/any-cli/kit/errs"
 )
 
 // DefaultUserAgent identifies the client to arXiv. The real one is stamped with
@@ -123,35 +120,12 @@ func NewClient(cfg Config) (*Client, error) {
 		verbose: cfg.Verbose,
 		log:     cfg.Log,
 		sleep:   sleepCtx,
-		now:     time.Now,
+		// UTC, because retrieved_at is documented as UTC and a record stamped in
+		// whatever zone the machine happened to be in is a record two people
+		// cannot compare.
+		now: func() time.Time { return time.Now().UTC() },
 	}
 	return c, nil
-}
-
-// SearchOptions controls a Search call.
-type SearchOptions struct {
-	Query    string // free-text query
-	Category string // "" = no category filter
-	Sort     string // "relevance" | "date" | "updated"
-	Limit    int
-}
-
-// Search returns up to opts.Limit papers matching the query.
-func (c *Client) Search(ctx context.Context, opts SearchOptions) ([]Paper, error) {
-	limit := opts.Limit
-	if limit <= 0 {
-		limit = 10
-	}
-	sort, err := ParseSort(opts.Sort)
-	if err != nil {
-		return nil, errs.Usage("%s", err.Error())
-	}
-	return c.searchPapers(ctx, Request{
-		Query: buildQuery(opts.Query, opts.Category),
-		Max:   limit,
-		Sort:  sort,
-		Order: Descending,
-	})
 }
 
 // Paper fetches the single paper with the given id at depth quick. PaperAt is
@@ -201,16 +175,6 @@ func (c *Client) searchPapers(ctx context.Context, req Request) ([]Paper, error)
 	return out, nil
 }
 
-// Count returns how many results a query has, which is the number the slicer
-// makes all of its decisions on.
-func (c *Client) Count(ctx context.Context, q Query) (int, error) {
-	feed, err := c.Do(ctx, CountRequest(q), TTLSearch)
-	if err != nil {
-		return 0, err
-	}
-	return feed.Total, nil
-}
-
 // Do sends one request and returns the decoded feed.
 func (c *Client) Do(ctx context.Context, req Request, ttl time.Duration) (*atomFeed, error) {
 	u, err := req.URL()
@@ -222,24 +186,6 @@ func (c *Client) Do(ctx context.Context, req Request, ttl time.Duration) (*atomF
 }
 
 // ─── internal helpers ─────────────────────────────────────────────────────────
-
-// buildQuery turns the free-text form of a search into a query.
-//
-// Terms are joined with a real space and a real AND, and the encoder escapes
-// them exactly once on the way out. That is the whole of the fix: writing
-// "+AND+" here and then encoding turned the plus signs into %2B and asked arXiv
-// one nonsense question instead of two real ones.
-func buildQuery(query, category string) Query {
-	words := strings.Fields(query)
-	terms := make([]Query, 0, len(words)+1)
-	for _, w := range words {
-		terms = append(terms, Term(FieldAll, w))
-	}
-	if category != "" {
-		terms = append(terms, Term(FieldCategory, category))
-	}
-	return And(terms...)
-}
 
 // getXML fetches a URL and decodes the Atom feed, including the error feed
 // arXiv answers a bad query with.

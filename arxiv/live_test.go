@@ -307,3 +307,135 @@ func TestLiveOAICreatedIsStillTheWrongDate(t *testing.T) {
 		t.Log("OAI created now agrees with s1 published; first_submitted could come from either")
 	}
 }
+
+// TestLiveCategoryExpansionIsStillNeeded checks the measurement expandCategory
+// is built on. A bare archive code matches papers only if the archive was never
+// split into categories, and matches nothing at all if it was, so neither form
+// alone answers for every archive and the OR of the two is what a person means
+// by --cat cs.
+//
+// If arXiv ever starts indexing both forms, both halves come back non-zero here
+// and expandCategory can drop to one term.
+func TestLiveCategoryExpansionIsStillNeeded(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+
+	// cs was split into cs.AI, cs.CL and the rest. hep-th never was.
+	for _, code := range []string{"cs", "hep-th"} {
+		bare, err := c.Count(ctx, Term(FieldCategory, code))
+		if err != nil {
+			t.Fatalf("count cat:%s: %v", code, err)
+		}
+		star, err := c.Count(ctx, Term(FieldCategory, code+".*"))
+		if err != nil {
+			t.Fatalf("count cat:%s.*: %v", code, err)
+		}
+		both, err := c.Count(ctx, expandCategory(code))
+		if err != nil {
+			t.Fatalf("count %s: %v", expandCategory(code), err)
+		}
+		t.Logf("cat:%s %d, cat:%s.* %d, expanded %d", code, bare, code, star, both)
+
+		if bare > 0 && star > 0 {
+			t.Logf("both forms of %s now match; expandCategory could be one term", code)
+		}
+		if bare == 0 && star == 0 {
+			t.Errorf("neither cat:%s nor cat:%s.* matches anything", code, code)
+		}
+		if want := max(bare, star); both < want {
+			t.Errorf("expanded %s counted %d, want at least %d", code, both, want)
+		}
+	}
+}
+
+// TestLiveSearchFlagsBuildAWorkingQuery runs the flags a person actually types
+// and checks the papers that come back match what was asked for. It is the end
+// to end version of TestSearchQueryFromFlags, which only reads the query string.
+func TestLiveSearchFlagsBuildAWorkingQuery(t *testing.T) {
+	c := liveClient(t)
+
+	papers, err := c.Search(context.Background(), SearchOptions{
+		Categories: []string{"cs.CL"},
+		From:       "2026-01",
+		To:         "2026-01",
+		Sort:       "submitted",
+		Order:      "asc",
+		Limit:      5,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(papers) != 5 {
+		t.Fatalf("got %d papers, want 5", len(papers))
+	}
+	for _, p := range papers {
+		if p.PrimaryCategory != "cs.CL" && !contains(p.Categories, "cs.CL") {
+			t.Errorf("%s is in %v, none of them cs.CL", p.ID, p.Categories)
+		}
+		m := p.FirstSubmitted.UTC().Format("2006-01")
+		if m != "2026-01" {
+			t.Errorf("%s was submitted in %s, want 2026-01", p.ID, m)
+		}
+	}
+}
+
+// TestLiveAllWalksWithoutRepeating walks a bounded slice with --all and checks
+// the walk holds its order and never hands the same paper over twice. A walk
+// that repeats is the failure mode of paging a moving result set, and it is the
+// reason searchAll sorts by submission date ascending whatever --sort said.
+func TestLiveAllWalksWithoutRepeating(t *testing.T) {
+	c := liveClient(t)
+
+	seen := map[string]bool{}
+	var last time.Time
+	err := c.SearchStream(context.Background(), SearchOptions{
+		Categories: []string{"econ.GN"},
+		From:       "2026-01-05",
+		To:         "2026-01-09",
+		All:        true,
+	}, func(p *Paper) error {
+		if seen[p.ID] {
+			t.Errorf("%s came back twice", p.ID)
+		}
+		seen[p.ID] = true
+		if !last.IsZero() && p.FirstSubmitted.Before(last) {
+			t.Errorf("%s at %s came after %s, walk is not ascending", p.ID, p.FirstSubmitted, last)
+		}
+		last = p.FirstSubmitted
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(seen) == 0 {
+		t.Fatal("walk returned nothing")
+	}
+	t.Logf("walked %d papers", len(seen))
+}
+
+// TestLiveCountMatchesTheWalk checks that the number a count prints is the
+// number a walk hands over. They come from different places, opensearch on one
+// side and a page of entries on the other, and a gap between them means one of
+// the two is lying to the user.
+func TestLiveCountMatchesTheWalk(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	opts := SearchOptions{
+		Categories: []string{"econ.GN"},
+		From:       "2026-01-05",
+		To:         "2026-01-09",
+		All:        true,
+	}
+
+	got, err := c.CountSearch(ctx, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := 0
+	if err := c.SearchStream(ctx, opts, func(*Paper) error { n++; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if got.Total != n {
+		t.Errorf("count says %d, walk handed over %d", got.Total, n)
+	}
+}
