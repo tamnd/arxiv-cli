@@ -227,6 +227,18 @@ func ctxErr(err error) error {
 	return err
 }
 
+// notice writes a message whatever the verbosity is.
+//
+// It is for the handful of things a person needs to be told without asking,
+// which so far is one: that the read they just started will take minutes.
+// Everything else goes through logf and waits for -v.
+func (c *Client) notice(format string, args ...any) {
+	if c.log == nil {
+		return
+	}
+	fmt.Fprintf(c.log, format+"\n", args...)
+}
+
 // logf writes a message when the verbosity is at least level.
 func (c *Client) logf(level int, format string, args ...any) {
 	if c.verbose < level || c.log == nil {

@@ -149,3 +149,28 @@ func TestDepthsAreCumulative(t *testing.T) {
 		}
 	}
 }
+
+// TestEstimateNoticeThreshold checks the notice fires where it should. It is a
+// unit test on the rule rather than on the plumbing, because the plumbing is
+// eleven live requests.
+func TestEstimateNoticeThreshold(t *testing.T) {
+	cases := []struct {
+		papers int
+		depth  Depth
+		want   bool
+	}{
+		{11, DepthFull, true},
+		{10, DepthFull, false},
+		{100, DepthMeta, false},
+		{11, DepthText, true},
+	}
+	for _, tc := range cases {
+		got := tc.papers > estimateFrom && tc.depth.CrossesHTMLPlane()
+		if got != tc.want {
+			t.Errorf("%d papers at %s: notice %v, want %v", tc.papers, tc.depth, got, tc.want)
+		}
+	}
+	if got := EstimateRead(11, DepthFull).String(); got == "" {
+		t.Error("the notice has nothing to say")
+	}
+}

@@ -96,9 +96,9 @@ func newClient(_ context.Context, cfg kit.Config) (any, error) {
 	c.CacheDir = cfg.CacheDir
 	c.NoCache = cfg.NoCache
 	c.Verbose = cfg.Verbose
-	if cfg.Verbose > 0 {
-		c.Log = os.Stderr
-	}
+	// Stderr is the log whatever the verbosity, because the notices that ignore
+	// -v need somewhere to go. logf still waits to be asked.
+	c.Log = os.Stderr
 
 	client, err := NewClient(c)
 	if err != nil {
