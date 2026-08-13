@@ -59,6 +59,8 @@ func TestDomainRegisters(t *testing.T) {
 		"paper":      "read",
 		"author":     "read",
 		"categories": "read",
+		"category":   "read",
+		"sets":       "read",
 		"id":         "explain",
 		"planes":     "explain",
 	}

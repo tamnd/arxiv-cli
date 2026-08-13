@@ -3,6 +3,7 @@ package arxiv
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/tamnd/any-cli/kit"
@@ -69,6 +70,8 @@ func (Domain) Register(app *kit.App) {
 	registerPaper(app)
 	registerAuthor(app)
 	registerCategories(app)
+	registerCategory(app)
+	registerSets(app)
 	registerID(app)
 	registerPlanes(app)
 }
@@ -210,7 +213,9 @@ query that was built and the URL it went out on.
 
 --cat takes a category code and repeats, and the codes are OR'd together. A
 bare archive code such as hep-th or cs matches whether or not that archive was
-split into categories.
+split into categories. A code arXiv does not have is refused before any request
+goes out, because arXiv answers a wrong code with zero results and no error,
+which reads as an empty category rather than as a typo.
 
 The date flags take 2026, 2026-01 or 2026-01-01. A bound names a period rather
 than an instant, so --to 2026-01 means the end of January and not the start of
@@ -385,7 +390,11 @@ author field rather than a person. Results come back newest first.`,
 	})
 }
 
-type categoriesIn struct{}
+type categoriesIn struct {
+	Group  string  `kit:"flag" help:"only categories in this group, matched loosely: physics, cs, math"`
+	Search string  `kit:"flag" help:"only categories whose code, name or description contains this"`
+	Client *Client `kit:"inject"`
+}
 
 func registerCategories(app *kit.App) {
 	kit.Handle(app, kit.OpMeta{
@@ -393,10 +402,107 @@ func registerCategories(app *kit.App) {
 		Group:   "read",
 		List:    true,
 		URIType: "category",
-		Summary: "List arXiv category codes",
-		Long:    "Print the arXiv category codes. No network call.",
-	}, func(_ context.Context, _ categoriesIn, emit func(*Category) error) error {
-		return emitAll(CommonCategories(), emit)
+		Summary: "List the arXiv categories",
+		Long: `List the arXiv categories, with their descriptions.
+
+All 155 of them, read from arxiv.org/category_taxonomy and joined to the 183
+OAI sets, so each one carries the set spec it is harvested as. Both tables are
+cached for a week and both ship with the binary, so a first run with no network
+still prints the list and says which day the bundled copy was saved.
+
+--search looks in the description as well as the code and the name, which is
+what makes the list useful to somebody who does not already know that game
+theory is cs.GT and econ.TH and math.OC.`,
+	}, func(ctx context.Context, in categoriesIn, emit func(*Category) error) error {
+		cats, err := in.Client.Categories(ctx)
+		if err != nil {
+			return mapErr(err)
+		}
+		return emitAll(filterCategories(cats, in.Group, in.Search), emit)
+	})
+}
+
+// filterCategories applies --group and --search.
+//
+// The group match is loose because the group is spelled out on the page and
+// nobody types "Electrical Engineering and Systems Science": eess, or a word of
+// it, is what a person has in mind.
+func filterCategories(cats []Category, group, search string) []Category {
+	group = strings.ToLower(strings.TrimSpace(group))
+	search = strings.ToLower(strings.TrimSpace(search))
+	out := make([]Category, 0, len(cats))
+	for _, c := range cats {
+		if group != "" && !strings.Contains(strings.ToLower(c.Group), group) && !strings.EqualFold(c.Archive, group) &&
+			!strings.HasPrefix(strings.ToLower(c.Code), group+".") {
+			continue
+		}
+		if search != "" &&
+			!strings.Contains(strings.ToLower(c.Code), search) &&
+			!strings.Contains(strings.ToLower(c.Name), search) &&
+			!strings.Contains(strings.ToLower(c.Description), search) {
+			continue
+		}
+		out = append(out, c)
+	}
+	return out
+}
+
+type categoryIn struct {
+	Code   string  `kit:"arg" help:"a category code such as cs.CL"`
+	Count  bool    `kit:"flag" help:"also count the papers submitted in the last thirty days"`
+	Client *Client `kit:"inject"`
+}
+
+func registerCategory(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "category",
+		Group:   "read",
+		Single:  true,
+		URIType: "category",
+		Summary: "Show one category",
+		Args:    []kit.Arg{{Name: "code", Help: "a category code such as cs.CL"}},
+		Long: `Show one category: its name, its group, its archive, its description and the
+OAI set spec it is harvested as.
+
+The set spec is a join and not a rewrite. cs.CL is cs:cs:CL and hep-th is
+physics:hep-th with no middle segment, because hep-th is an archive that was
+never split into categories.
+
+--count adds the number of papers submitted to the category in the last thirty
+days, which costs one request to the API and is a different number tomorrow.`,
+	}, func(ctx context.Context, in categoryIn, emit func(*Category) error) error {
+		cat, err := in.Client.Category(ctx, in.Code, in.Count)
+		if err != nil {
+			return mapErr(err)
+		}
+		return emit(&cat)
+	})
+}
+
+type setsIn struct {
+	Client *Client `kit:"inject"`
+}
+
+func registerSets(app *kit.App) {
+	kit.Handle(app, kit.OpMeta{
+		Name:    "sets",
+		Group:   "read",
+		List:    true,
+		URIType: "set",
+		Summary: "List the OAI-PMH sets",
+		Long: `List the OAI-PMH sets, which are what a harvest is scoped by.
+
+The response carries 183 sets and nine of them are listed twice, once as an
+archive and once as a category, so the list here is the 174 distinct ones. Each
+set names the category it harvests where there is one; an archive level set such
+as physics:cond-mat has none, because it is a container for the categories under
+it.`,
+	}, func(ctx context.Context, in setsIn, emit func(*Set) error) error {
+		sets, err := in.Client.Sets(ctx)
+		if err != nil {
+			return mapErr(err)
+		}
+		return emitAll(sets, emit)
 	})
 }
 

@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -76,6 +77,18 @@ type Client struct {
 	cache   *cache
 	verbose int
 	log     io.Writer
+
+	// The taxonomy is read at most once per client and shared by the category
+	// commands, the set join and the unknown category notice.
+	taxOnce sync.Once
+	tax     []Category
+	taxErr  error
+
+	// unknownCats remembers which unknown category codes have already been
+	// reported, so a walk of ten thousand papers says it once and not once a
+	// paper.
+	unknownMu   sync.Mutex
+	unknownCats map[string]bool
 
 	sleep func(context.Context, time.Duration) error
 	// now stamps a record's retrieved_at. It is a field so a golden test can
@@ -170,7 +183,9 @@ func (c *Client) searchPapers(ctx context.Context, req Request) ([]Paper, error)
 	at := c.now()
 	out := make([]Paper, 0, len(feed.Entries))
 	for _, e := range feed.Entries {
-		out = append(out, entryToPaper(e, u, at))
+		p := entryToPaper(e, u, at)
+		c.noteUnknownCategories(p.Categories...)
+		out = append(out, p)
 	}
 	return out, nil
 }

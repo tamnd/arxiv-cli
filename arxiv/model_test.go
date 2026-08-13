@@ -175,7 +175,7 @@ func TestEnvelopeSurfaces(t *testing.T) {
 }
 
 func TestSurfaceNames(t *testing.T) {
-	for _, id := range []string{SurfaceAPI, SurfaceOAI, SurfaceAbs} {
+	for _, id := range []string{SurfaceAPI, SurfaceOAI, SurfaceAbs, SurfaceSearch, SurfaceTaxonomy} {
 		if SurfaceNames[id] == "" {
 			t.Errorf("surface %s has no name", id)
 		}
