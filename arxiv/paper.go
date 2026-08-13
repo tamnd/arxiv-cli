@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tamnd/arxiv-cli/pkg/axid"
+	"github.com/tamnd/arxiv-cli/pkg/latexml"
 )
 
 // estimateFrom is how many papers a deep read has to cover before the cost is
@@ -153,8 +154,57 @@ func (c *Client) deepen(ctx context.Context, p *Paper, depth Depth) error {
 		}
 	}
 
+	if depth.AtLeast(DepthText) && p.HasHTML {
+		doc, source, err := c.getFullText(ctx, *p)
+		switch {
+		case err == nil:
+			mergeFullText(p, doc, source)
+		case errors.Is(err, ErrNotFound):
+			// The abstract page said there was a rendering and the rendering
+			// is not there. That is arXiv disagreeing with itself, and the
+			// record it already has is worth more than the disagreement.
+			c.logf(1, "%s claims an html rendering and %s is not there", p.ID, source)
+		default:
+			return err
+		}
+	}
+
 	annotateDepth(p, depth)
 	return nil
+}
+
+// mergeFullText folds a rendering into a paper.
+//
+// The affiliations are the point. They are matched onto the authors the
+// metadata surfaces already gave, by name, because the two lists are the same
+// people written by two different pipelines and an affiliation attached to the
+// wrong author is a fact about the wrong person. A name the metadata does not
+// have is added rather than dropped, with s10 against it, because the rendering
+// is the paper itself.
+func mergeFullText(p *Paper, doc *latexml.Document, source string) {
+	p.addSurface(SurfaceFullText, source)
+	p.Sections = toSections(doc.Sections)
+	p.setVia("sections", SurfaceFullText)
+	if doc.License != "" && p.LicenseName == "" {
+		p.LicenseName = doc.License
+		p.setVia("license_name", SurfaceFullText)
+	}
+
+	known := make(map[string]int, len(p.Authors))
+	for i, a := range p.Authors {
+		known[nameSlug(a.Name)] = i
+	}
+	for _, a := range doc.Authors {
+		if a.Affiliation == "" {
+			continue
+		}
+		if i, ok := known[nameSlug(a.Name)]; ok {
+			p.Authors[i].Affiliation = a.Affiliation
+			continue
+		}
+		p.Authors = append(p.Authors, Author{Name: a.Name, Affiliation: a.Affiliation, Via: SurfaceFullText})
+	}
+	p.setVia("affiliations", SurfaceFullText)
 }
 
 // annotateDepth records how deep the read went and what that left out.
@@ -164,10 +214,11 @@ func annotateDepth(p *Paper, depth Depth) {
 	if !depth.AtLeast(DepthText) {
 		return
 	}
-	// The full text surface is milestone 7. Until it lands, asking for it reads
-	// everything below it and says plainly that the last surface was not read,
-	// which beats pretending it was.
-	p.Missed = append(p.Missed, "the full text was not read; arxiv fulltext "+p.ID+" reads it")
+	// A paper arXiv never rendered has no body to read, and a record that just
+	// showed no sections would look like a read that failed.
+	if !p.HasHTML {
+		p.Missed = append(p.Missed, "arXiv has no LaTeXML rendering of this paper, so there is no full text to read")
+	}
 }
 
 // Estimate is what a read is going to cost in wall clock time.

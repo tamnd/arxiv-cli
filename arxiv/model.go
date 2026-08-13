@@ -31,6 +31,9 @@ const (
 	// that carries an ORCID and the only one where arXiv says a named person
 	// owns a set of papers.
 	SurfaceAuthorID = "s8" // the author identifier page
+	// SurfaceFullText is the LaTeXML rendering, which is the only surface that
+	// carries an affiliation, a section tree or the body of a paper at all.
+	SurfaceFullText = "s10" // the LaTeXML full text
 )
 
 // SurfaceNames is what each id is, for `arxiv planes` and for help text.
@@ -43,6 +46,7 @@ var SurfaceNames = map[string]string{
 	SurfaceRSS:      "the announcement feed",
 	SurfaceTaxonomy: "the category taxonomy",
 	SurfaceAuthorID: "the author identifier page",
+	SurfaceFullText: "the LaTeXML full text",
 }
 
 // Envelope is what every record carries about its own provenance.
@@ -223,6 +227,14 @@ type Paper struct {
 	// variable set of labels and arXiv adds one from time to time, so an
 	// unrecognised label is kept here rather than dropped on the floor.
 	Extra map[string]string `json:"extra,omitempty" table:"-"`
+
+	// ─── full text ───
+
+	// Sections is the section tree of the LaTeXML rendering, present at
+	// --depth text and only for a paper arXiv rendered. The prose is in it: a
+	// paper read this deep is a megabyte rather than a kilobyte, which is why
+	// nothing shallower goes near it.
+	Sections []Section `json:"sections,omitempty" table:"-"`
 
 	// Depth is how deeply this record was read.
 	Depth string `json:"depth" table:"-"`
