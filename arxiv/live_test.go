@@ -594,3 +594,120 @@ func TestLiveTaxonomyStillMatchesTheSnapshot(t *testing.T) {
 		}
 	}
 }
+
+// TestLiveListingRowShape reads one real listing page and checks the shape the
+// parser depends on. A page whose divs were renamed would still parse and would
+// return fifty rows with no titles on them, which is the failure worth
+// catching.
+func TestLiveListingRowShape(t *testing.T) {
+	c := liveClient(t)
+	var got []Paper
+	err := c.ListStream(context.Background(), ListOptions{Category: "cs.CL", Month: "2026-01", Show: 25},
+		func(p *Paper) error {
+			got = append(got, *p)
+			return nil
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 25 {
+		t.Fatalf("%d rows, want the 25 that were asked for", len(got))
+	}
+	for _, p := range got {
+		if p.ID == "" || p.Title == "" || len(p.Authors) == 0 || p.PrimaryCategory == "" {
+			t.Errorf("%+v is missing something every row has", p)
+		}
+		if !strings.HasPrefix(p.ID, "2601.") {
+			t.Errorf("%s is on the January 2026 listing, which lists ids from that month", p.ID)
+		}
+		if p.Abstract != "" {
+			t.Errorf("%s came back with an abstract, which the listing does not publish", p.ID)
+		}
+	}
+	t.Logf("first row: %s %s", got[0].ID, got[0].Title)
+}
+
+// TestLiveListingShowValues checks the sizes arXiv accepts, because the refusal
+// in validate is built on them and a size it started refusing would turn into a
+// 400 the user cannot do anything about.
+func TestLiveListingShowValues(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	for _, show := range []int{25, 2000} {
+		o := ListOptions{Category: "math.AG", Month: "2026-01", Show: show}
+		if _, err := c.getList(ctx, o.URL(0, show)); err != nil {
+			t.Errorf("show=%d: %v", show, err)
+		}
+	}
+	// The other half of the rule: a size not on arXiv's list is a 400, which
+	// is why validate refuses it before the request.
+	o := ListOptions{Category: "math.AG", Month: "2026-01"}
+	if _, err := c.getList(ctx, o.URL(0, 7)); err == nil {
+		t.Error("show=7 was accepted, so the refusal in validate is now wrong")
+	}
+}
+
+// TestLiveShortMonthStill404s is the measurement the refusal quotes. The day
+// arXiv brings the four digit form back, this is how the tool finds out.
+func TestLiveShortMonthStill404s(t *testing.T) {
+	c := liveClient(t)
+	if _, err := c.getList(context.Background(), listBase+"cs.CL/2601?skip=0&show=25"); err == nil {
+		t.Error("/list/cs.CL/2601 answered, so the short month form is back")
+	}
+}
+
+// TestLiveFeedHasEveryAnnounceType reads a real feed and checks that all four
+// types are still published under those names. The whole command is built on
+// that field.
+func TestLiveFeedHasEveryAnnounceType(t *testing.T) {
+	c := liveClient(t)
+	items, err := c.Announcements(context.Background(), FeedOptions{Category: "cs.CL"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) == 0 {
+		t.Fatal("the cs.CL feed is empty, which it never is on a weekday")
+	}
+	counts := map[string]int{}
+	for _, a := range items {
+		counts[a.AnnounceType]++
+		if a.PaperID == "" || a.Title == "" || a.Abstract == "" {
+			t.Errorf("%+v is missing something every item has", a)
+		}
+		if !contains(AnnounceTypes, a.AnnounceType) {
+			t.Errorf("%s is announced as %q, which is a type this build does not know", a.PaperID, a.AnnounceType)
+		}
+		if a.Version < 1 {
+			t.Errorf("%s has no version, and the guid is the only element that carries one", a.PaperID)
+		}
+	}
+	for _, kind := range AnnounceTypes {
+		if counts[kind] == 0 {
+			t.Errorf("no item is announced as %q", kind)
+		}
+	}
+	t.Logf("%d items: %v", len(items), counts)
+}
+
+// TestLiveFeedFilter checks the filter against the whole feed, because the
+// count under the table is of the feed and the list is of what survived.
+func TestLiveFeedFilter(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+	all, err := c.Announcements(ctx, FeedOptions{Category: "cs.CL"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	only, err := c.Announcements(ctx, FeedOptions{Category: "cs.CL", Types: []string{AnnounceNew}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(only) >= len(all) || len(only) == 0 {
+		t.Errorf("--type new returned %d of %d", len(only), len(all))
+	}
+	for _, a := range only {
+		if a.AnnounceType != AnnounceNew {
+			t.Errorf("%s is a %s and came back under --type new", a.PaperID, a.AnnounceType)
+		}
+	}
+}

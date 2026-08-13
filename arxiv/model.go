@@ -15,9 +15,15 @@ const (
 	SurfaceAPI = "s1" // export API Atom
 	SurfaceOAI = "s2" // OAI-PMH
 	SurfaceAbs = "s3" // the abstract page
+	// SurfaceList is the monthly category listing, which is arXiv's own
+	// announcement order and the only surface that publishes a per month total.
+	SurfaceList = "s4" // the category listing
 	// SurfaceSearch is the search UI, which is the only surface that answers
 	// for the seven fields in doc 02 section 2.3.
 	SurfaceSearch = "s5" // the search UI
+	// SurfaceRSS is the announcement feed, and the only surface anywhere that
+	// says whether an item is a new paper, a cross list or a replacement.
+	SurfaceRSS = "s6" // the announcement feed
 	// SurfaceTaxonomy is the category taxonomy page. It is declared here with
 	// the rest of the vocabulary and used in taxonomy.go.
 	SurfaceTaxonomy = "s7" // the category taxonomy
@@ -28,7 +34,9 @@ var SurfaceNames = map[string]string{
 	SurfaceAPI:      "the export API",
 	SurfaceOAI:      "OAI-PMH",
 	SurfaceAbs:      "the abstract page",
+	SurfaceList:     "the category listing",
 	SurfaceSearch:   "the search UI",
+	SurfaceRSS:      "the announcement feed",
 	SurfaceTaxonomy: "the category taxonomy",
 }
 
@@ -204,6 +212,12 @@ type Paper struct {
 	// search result has and only the search UI publishes. It is the one thing
 	// a result knows that the paper itself does not.
 	Hits []string `json:"hits,omitempty" table:"-"`
+
+	// Extra holds a labelled value a surface published that this model has no
+	// field for, keyed by the label as arXiv wrote it. The listing rows carry a
+	// variable set of labels and arXiv adds one from time to time, so an
+	// unrecognised label is kept here rather than dropped on the floor.
+	Extra map[string]string `json:"extra,omitempty" table:"-"`
 
 	// Depth is how deeply this record was read.
 	Depth string `json:"depth" table:"-"`

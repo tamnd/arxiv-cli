@@ -56,6 +56,8 @@ func TestDomainRegisters(t *testing.T) {
 	groups := map[string]string{
 		"search":     "read",
 		"count":      "read",
+		"list":       "read",
+		"new":        "read",
 		"paper":      "read",
 		"author":     "read",
 		"categories": "read",
