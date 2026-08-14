@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+    <responseDate>2026-08-13T14:38:59Z</responseDate>
+                <request verb="GetRecord" identifier="oai:arXiv.org:hep-th/9711200" metadataPrefix="arXiv">http://oaipmh.arxiv.org/oai</request>
+
+
+    <GetRecord>
+                <record>
+                <header>
+        <identifier>oai:arXiv.org:hep-th/9711200</identifier>
+        <datestamp>2014-11-17</datestamp>
+            <setSpec>physics:hep-th</setSpec>
+    </header>
+
+            <metadata>
+                        <arXiv xmlns="http://arxiv.org/OAI/arXiv/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://arxiv.org/OAI/arXiv/ https://oaipmh.arxiv.org/OAI/arXiv.xsd">
+        <id>hep-th/9711200</id>
+        <created>1998-01-22</created>
+            <updated>2014-11-17</updated>
+        <authors>
+                <author>
+                    <keyname>Maldacena</keyname>
+                        <forenames>Juan M.</forenames>
+                </author>
+        </authors>
+        <title>The Large N Limit of Superconformal Field Theories and Supergravity</title>
+            <categories>hep-th</categories>
+            <comments>20 pages, harvmac, v2: section on AdS_2 corrected, references added, v3: More references and a sign in eqns 2.8 and 2.9 corrected</comments>
+            <report-no>HUTP-98/A097</report-no>
+            <journal-ref>Adv.Theor.Math.Phys.2:231-252,1998</journal-ref>
+            <doi>10.1023/A:1026654312961</doi>
+            <abstract>  We show that the large $N$ limit of certain conformal field theories in various dimensions include in their Hilbert space a sector describing supergravity on the product of Anti-deSitter spacetimes, spheres and other compact manifolds. This is shown by taking some branes in the full M/string theory and then taking a low energy limit where the field theory on the brane decouples from the bulk. We observe that, in this limit, we can still trust the near horizon geometry for large $N$. The enhanced supersymmetries of the near horizon geometry correspond to the extra supersymmetry generators present in the superconformal group (as opposed to just the super-Poincare group). The &#39;t Hooft limit of 4-d ${\cal N} =4$ super-Yang-Mills at the conformal point is shown to contain strings: they are IIB strings. We conjecture that compactifications of M/string theory on various Anti-deSitter spacetimes are dual to various conformal field theories. This leads to a new proposal for a definition of M-theory which could be extended to include five non-compact dimensions.</abstract>
+    </arXiv>
+
+            </metadata>
+        </record>
+
+    </GetRecord>
+</OAI-PMH>

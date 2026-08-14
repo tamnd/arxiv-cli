@@ -1,0 +1,42 @@
+# Every fixture in this directory, where it came from, and when.
+#
+# Nothing here is hand written. Each file is the bytes arXiv served for the URL
+# in its row, saved unedited, so a test that parses a fixture is parsing what
+# arXiv actually says rather than what somebody remembered it saying. The date
+# is when the bytes were read, and it is there because a fixture with no date is
+# a claim with no age.
+#
+# capture_test.go reads this file and checks it both ways: a fixture with no row
+# fails, and a row with no fixture fails.
+#
+# Four columns, tab separated: the file, the surface id from doc 01, the date it
+# was read, and the URL it was read from.
+
+a_baez_j_1.html	s8	2026-08-14	https://arxiv.org/a/baez_j_1
+abs_1207.7214.html	s3	2026-08-14	https://arxiv.org/abs/1207.7214
+abs_1706.03762.html	s3	2026-08-13	https://arxiv.org/abs/1706.03762
+abs_hep-th_9711200.html	s3	2026-08-14	https://arxiv.org/abs/hep-th/9711200
+api_1207.7214.xml	s1	2026-08-13	https://export.arxiv.org/api/query?id_list=1207.7214&max_results=1
+api_1706.03762.xml	s1	2026-08-13	https://export.arxiv.org/api/query?id_list=1706.03762&max_results=1
+api_error_start.xml	s1	2026-08-14	https://export.arxiv.org/api/query?search_query=all:electron&start=nope&max_results=1
+api_hep-th_9711200.xml	s1	2026-08-14	https://export.arxiv.org/api/query?id_list=hep-th/9711200&max_results=1
+api_zero_results.xml	s1	2026-08-14	https://export.arxiv.org/api/query?search_query=all:%22zzqqxx+not+a+real+phrase+anywhere%22&max_results=5
+golden_1706.03762_full.json	-	2026-08-13	go test ./arxiv -run Golden -update
+list_cs.CL_2026-01.html	s4	2026-08-14	https://arxiv.org/list/cs.CL/2026-01?skip=0&show=50
+list_cs.CL_recent.html	s4	2026-08-14	https://arxiv.org/list/cs.CL/recent?skip=0&show=50
+list_math.AG_2026-01.html	s4	2026-08-14	https://arxiv.org/list/math.AG/2026-01?skip=0&show=50
+oai_arxiv_1207.7214.xml	s2	2026-08-13	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:1207.7214&metadataPrefix=arXiv
+oai_arxiv_1706.03762.xml	s2	2026-08-13	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:1706.03762&metadataPrefix=arXiv
+oai_arxiv_hep-th_9711200.xml	s2	2026-08-14	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:hep-th/9711200&metadataPrefix=arXiv
+oai_dc_1207.7214.xml	s2	2026-08-14	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:1207.7214&metadataPrefix=oai_dc
+oai_dc_1706.03762.xml	s2	2026-08-14	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:1706.03762&metadataPrefix=oai_dc
+oai_raw_1706.03762.xml	s2	2026-08-13	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:1706.03762&metadataPrefix=arXivRaw
+oai_raw_hep-th_9711200.xml	s2	2026-08-14	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:hep-th/9711200&metadataPrefix=arXivRaw
+rate_exceeded.txt	s4	2026-08-13	https://arxiv.org/list/cs.CL/2026-01?skip=50&show=25
+robots.txt	-	2026-08-14	https://arxiv.org/robots.txt
+rss_cs.CL.xml	s6	2026-08-14	https://rss.arxiv.org/rss/cs.CL
+search_all_attention.html	s5	2026-08-13	https://arxiv.org/search/?searchtype=all&query=attention+is+all+you+need&size=50&start=0
+search_msc_18D10.html	s5	2026-08-13	https://arxiv.org/search/advanced?terms-0-field=msc_class&terms-0-term=18D10&terms-0-operator=AND&size=50&start=0
+tb_2401.00001.html	s11	2026-08-14	https://arxiv.org/tb/2401.00001
+tb_hep-th_9711200.html	s11	2026-08-14	https://arxiv.org/tb/hep-th/9711200
+tb_recent.html	s11	2026-08-14	https://arxiv.org/tb/recent?views=25
