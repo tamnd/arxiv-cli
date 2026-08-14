@@ -112,11 +112,12 @@ func TestRetrySucceedsAfterFailure(t *testing.T) {
 // sleeping the one request. The limiter's hold is what makes a concurrent read
 // back off too, so this asserts the wait went through the limiter.
 func TestRateLimitHoldsThePlane(t *testing.T) {
+	body := fixture(t, "rate_exceeded.txt")
 	var hits int32
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		atomic.AddInt32(&hits, 1)
 		w.WriteHeader(http.StatusTooManyRequests)
-		_, _ = w.Write([]byte("Rate exceeded."))
+		_, _ = w.Write(body)
 	}))
 	defer ts.Close()
 
@@ -152,11 +153,12 @@ func TestRateLimitHoldsThePlane(t *testing.T) {
 // 429 is arXiv asking us to slow down, not arXiv refusing, so the read waits and
 // then completes instead of coming back as a failure.
 func TestRateLimitRecovers(t *testing.T) {
+	body := fixture(t, "rate_exceeded.txt")
 	var hits int32
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if atomic.AddInt32(&hits, 1) == 1 {
 			w.WriteHeader(http.StatusTooManyRequests)
-			_, _ = w.Write([]byte("Rate exceeded."))
+			_, _ = w.Write(body)
 			return
 		}
 		_, _ = w.Write([]byte(sampleFeed))
