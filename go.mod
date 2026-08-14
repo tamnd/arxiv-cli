@@ -1,11 +1,11 @@
 module github.com/tamnd/arxiv-cli
 
-go 1.26.5
+go 1.26.6
 
 require (
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/tamnd/any-cli v0.4.12
-	golang.org/x/net v0.52.0
+	golang.org/x/net v0.55.0
 	golang.org/x/text v0.39.0
 	modernc.org/sqlite v1.56.0
 )
