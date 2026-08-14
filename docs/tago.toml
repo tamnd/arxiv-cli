@@ -1,6 +1,6 @@
 title       = "arxiv"
 baseURL     = "https://arxiv-cli.tamnd.com/"
-description = "A command line for arXiv."
+description = "Read arXiv's twelve public surfaces from the command line, with no API key."
 contentDir  = "content"
 outputDir   = "public"
 theme       = "tago-doks"
