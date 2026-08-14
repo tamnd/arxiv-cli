@@ -6,7 +6,8 @@ weight: 10
 featured: true
 ---
 
-Three short pages: the [introduction](/getting-started/introduction/) for how
-arxiv is put together, [installation](/getting-started/installation/) to
-get the binary, and the [quick start](/getting-started/quick-start/) to run
-something real.
+Three short pages.
+
+[Introduction](/getting-started/introduction/) is how arxiv is put together and what it gets you that the export API alone does not.
+[Installation](/getting-started/installation/) is how to get the binary.
+[Quick start](/getting-started/quick-start/) is running something real in the next two minutes.
