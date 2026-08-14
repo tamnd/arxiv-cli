@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+    <responseDate>2026-08-12T22:24:16Z</responseDate>
+                <request verb="GetRecord" identifier="oai:arXiv.org:1207.7214" metadataPrefix="oai_dc">http://oaipmh.arxiv.org/oai</request>
+
+
+    <GetRecord>
+                <record>
+                <header>
+        <identifier>oai:arXiv.org:1207.7214</identifier>
+        <datestamp>2012-09-04</datestamp>
+            <setSpec>physics:hep-ex</setSpec>
+    </header>
+
+            <metadata>
+                        <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ https://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+        <dc:title>Observation of a new particle in the search for the Standard Model Higgs boson with the ATLAS detector at the LHC</dc:title>
+            <dc:creator>The ATLAS Collaboration</dc:creator>
+            <dc:subject>High Energy Physics - Experiment</dc:subject>
+            <dc:description>A search for the Standard Model Higgs boson in proton-proton collisions with the ATLAS detector at the LHC is presented. The datasets used correspond to integrated luminosities of approximately 4.8 fb^-1 collected at sqrt(s) = 7 TeV in 2011 and 5.8 fb^-1 at sqrt(s) = 8 TeV in 2012. Individual searches in the channels H-&gt;ZZ^(*)-&gt;llll, H-&gt;gamma gamma and H-&gt;WW-&gt;e nu mu nu in the 8 TeV data are combined with previously published results of searches for H-&gt;ZZ^(*), WW^(*), bbbar and tau^+tau^- in the 7 TeV data and results from improved analyses of the H-&gt;ZZ^(*)-&gt;llll and H-&gt;gamma gamma channels in the 7 TeV data. Clear evidence for the production of a neutral boson with a measured mass of 126.0 +/- 0.4(stat) +/- 0.4(sys) GeV is presented. This observation, which has a significance of 5.9 standard deviations, corresponding to a background fluctuation probability of 1.7x10^-9, is compatible with the production and decay of the Standard Model Higgs boson. </dc:description>
+            <dc:description>24 pages plus author list (38 pages total), 12 figures, 7 tables, revised author list, matches version to appear in Physics Letters B</dc:description>
+        <dc:date>2012-07-31</dc:date>
+            <dc:date>2012-08-31</dc:date>
+        <dc:type>text</dc:type>
+        <dc:identifier>https://arxiv.org/abs/1207.7214</dc:identifier>
+        <dc:identifier>http://arxiv.org/abs/1207.7214</dc:identifier>
+            <dc:identifier>Phys.Lett. B716 (2012) 1-29</dc:identifier>
+            <dc:identifier>doi:10.1016/j.physletb.2012.08.020</dc:identifier>
+    </oai_dc:dc>
+
+            </metadata>
+        </record>
+
+    </GetRecord>
+</OAI-PMH>

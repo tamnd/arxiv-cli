@@ -32,6 +32,7 @@ func newRDFCmd() kit.Command {
 		trackbacks bool
 		noProv     bool
 		mapping    bool
+		check      bool
 	)
 	return kit.Command{
 		Use:   "rdf [ref...]",
@@ -50,6 +51,7 @@ this family export into so that a merged store joins.
   arxiv rdf 1706.03762 --format turtle        the same, grouped by subject
   arxiv rdf --from-store --format jsonld      everything a crawl kept
   arxiv rdf --mapping                         what becomes what, and why
+  arxiv rdf 1706.03762 --check                us against arXiv's own Dublin Core
 
 Every statement carries where it came from. In n-triples and turtle that is a
 quoted triple, << s p o >> prov:wasDerivedFrom <url>, one line per source. In
@@ -67,7 +69,13 @@ its author and arxiv writes it the other way. owl:sameAs appears exactly twice,
 on identified_as and has_orcid, which are the two places arXiv itself asserts an
 identity; a name node is never sameAs anything, because a name is not a person.
 And rdf:type carries no provenance where it was inferred: arXiv said a paper's
-dc:type is text, it never said schema:ScholarlyArticle.`,
+dc:type is text, it never said schema:ScholarlyArticle.
+
+--check is the mapping arguing with arXiv. It reads the oai_dc record and the
+abstract page's citation tags, which are two surfaces publishing bibliographic
+metadata in a vocabulary that is not arXiv's, and prints every Dublin Core term
+beside what this tool writes for it. The dc:date row is the one to look at:
+oai_dc gives two dates and does not say which is the submission.`,
 		Flags: func(f *kit.FlagSet) {
 			store.bind(f)
 			f.StringVar(&format, "format", rdf.FormatNT, "nt, turtle or jsonld")
@@ -77,10 +85,28 @@ dc:type is text, it never said schema:ScholarlyArticle.`,
 			f.BoolVar(&trackbacks, "trackbacks", false, "add the inbound links, one request on the fifteen second plane")
 			f.BoolVar(&noProv, "no-provenance", false, "leave out where each statement came from")
 			f.BoolVar(&mapping, "mapping", false, "print the mapping table and write nothing")
+			f.BoolVar(&check, "check", false, "compare one paper against arXiv's own Dublin Core and the citation tags")
 		},
 		Run: func(ctx context.Context, args []string) error {
 			if mapping {
 				return emitAll(ctx, mappingRows())
+			}
+			if check {
+				if fromStore {
+					return errs.Usage("the --check flag reads arXiv, so it has nothing to do with a store")
+				}
+				if len(args) != 1 {
+					return errs.Usage("the --check flag takes one reference, because the table is one paper compared three ways")
+				}
+				c, err := clientOf(ctx)
+				if err != nil {
+					return err
+				}
+				rows, err := c.Check(ctx, args[0])
+				if err != nil {
+					return err
+				}
+				return emitAll(ctx, rows)
 			}
 			if !contains(rdf.Formats, format) {
 				return errs.Usage("the --format value %q is not one of %s", format, strings.Join(rdf.Formats, ", "))
@@ -89,7 +115,7 @@ dc:type is text, it never said schema:ScholarlyArticle.`,
 
 			switch {
 			case fromStore && len(args) > 0:
-				return errs.Usage("--from-store writes the whole store, so it takes no references")
+				return errs.Usage("the --from-store flag writes the whole store, so it takes no references")
 			case fromStore:
 				d, err := docFromStore(store.resolve(ctx), "", limit)
 				if err != nil {
