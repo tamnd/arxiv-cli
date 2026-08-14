@@ -18,14 +18,20 @@ import (
 // still survives the host moving again.
 const oaiBase = "https://oaipmh.arxiv.org/oai"
 
-// The two metadata formats worth reading. oai_dc carries less than s1 does and
-// arXivOld is superseded, so neither is fetched.
+// The metadata formats. arXivOld is superseded and is not read at all.
 const (
 	// FormatArxiv gives structured author names and the bibliographic classes,
 	// which appear on no other surface.
 	FormatArxiv = "arXiv"
 	// FormatArxivRaw gives the version history and the submitter.
 	FormatArxivRaw = "arXivRaw"
+	// FormatOAIDC is Dublin Core, which every OAI-PMH repository has to serve.
+	// It is not read on the way in, because it says less than the other two and
+	// what it does say it says in a shape that has already been flattened.
+	// `arxiv rdf --check` reads it, and there the flattening is the point: it is
+	// arXiv writing Dublin Core about a paper, which is the thing to hold our own
+	// Dublin Core up against.
+	FormatOAIDC = "oai_dc"
 )
 
 // oaiURL builds a GetRecord request for one paper.
@@ -76,6 +82,25 @@ type oaiHeader struct {
 type oaiMetadata struct {
 	Arxiv    oaiArxiv    `xml:"arXiv"`
 	ArxivRaw oaiArxivRaw `xml:"arXivRaw"`
+	DC       oaiDC       `xml:"dc"`
+}
+
+// oaiDC is the Dublin Core record, every element repeatable because Dublin Core
+// says so and arXiv uses that: two dc:date elements, one per date it has, and
+// two dc:description elements, the abstract and then the comment.
+//
+// Which date is which is not stated, and that is the disagreement `arxiv rdf
+// --check` exists to keep visible.
+type oaiDC struct {
+	Titles       []string `xml:"title"`
+	Creators     []string `xml:"creator"`
+	Subjects     []string `xml:"subject"`
+	Descriptions []string `xml:"description"`
+	Dates        []string `xml:"date"`
+	Types        []string `xml:"type"`
+	Identifiers  []string `xml:"identifier"`
+	Rights       []string `xml:"rights"`
+	Publishers   []string `xml:"publisher"`
 }
 
 // oaiArxiv is the arXiv metadata format.

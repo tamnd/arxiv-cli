@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+    <responseDate>2026-08-13T21:51:19Z</responseDate>
+                <request verb="GetRecord" identifier="oai:arXiv.org:1706.03762" metadataPrefix="oai_dc">http://oaipmh.arxiv.org/oai</request>
+
+
+    <GetRecord>
+                <record>
+                <header>
+        <identifier>oai:arXiv.org:1706.03762</identifier>
+        <datestamp>2023-08-03</datestamp>
+            <setSpec>cs:cs:CL</setSpec>
+            <setSpec>cs:cs:LG</setSpec>
+    </header>
+
+            <metadata>
+                        <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ https://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+        <dc:title>Attention Is All You Need</dc:title>
+            <dc:creator>Vaswani, Ashish</dc:creator>
+            <dc:creator>Shazeer, Noam</dc:creator>
+            <dc:creator>Parmar, Niki</dc:creator>
+            <dc:creator>Uszkoreit, Jakob</dc:creator>
+            <dc:creator>Jones, Llion</dc:creator>
+            <dc:creator>Gomez, Aidan N.</dc:creator>
+            <dc:creator>Kaiser, Lukasz</dc:creator>
+            <dc:creator>Polosukhin, Illia</dc:creator>
+            <dc:subject>Computation and Language</dc:subject>
+            <dc:subject>Machine Learning</dc:subject>
+            <dc:description>The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data. </dc:description>
+            <dc:description>15 pages, 5 figures</dc:description>
+        <dc:date>2017-06-12</dc:date>
+            <dc:date>2023-08-02</dc:date>
+        <dc:type>text</dc:type>
+        <dc:identifier>https://arxiv.org/abs/1706.03762</dc:identifier>
+        <dc:identifier>http://arxiv.org/abs/1706.03762</dc:identifier>
+    </oai_dc:dc>
+
+            </metadata>
+        </record>
+
+    </GetRecord>
+</OAI-PMH>

@@ -1914,3 +1914,38 @@ func TestLiveArchiveOfAPaperThatIsNotThere(t *testing.T) {
 		}
 	}
 }
+
+// TestLiveTheDateRowStillDisagrees is the golden version of the check, run
+// against arXiv rather than a saved copy.
+//
+// oai_dc publishes two dc:date elements and says nothing about which one is the
+// submission. Doc 00 section 0.3 measured that, doc 03 section 2.5 decided the
+// submission wins, and this is the test that notices the day OAI changes its
+// mind. If it starts passing as an agreement, the mapping gets simpler and the
+// note on the row is wrong.
+func TestLiveTheDateRowStillDisagrees(t *testing.T) {
+	c := liveClient(t)
+	rows, err := c.Check(context.Background(), "1207.7214")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var date CheckRow
+	for _, r := range rows {
+		t.Logf("%-14s %-22s ours %v | oai_dc %v | citation %v", r.Predicate, r.Agree, r.OursValues, r.DCValues, r.CitValues)
+		if r.Predicate == "dc:date" {
+			date = r
+		}
+	}
+	if date.Predicate == "" {
+		t.Fatal("the table has no dc:date row")
+	}
+	if date.Agree == AgreeYes || date.Agree == AgreeNormalised {
+		t.Fatalf("dc:date now reads %q, so the two surfaces agree and the mapping can be simpler", date.Agree)
+	}
+	if !contains(date.OursValues, "2012-07-31") {
+		t.Errorf("this tool writes %v, want the submission date", date.OursValues)
+	}
+	if !contains(date.DCValues, "2012-08-31") {
+		t.Errorf("oai_dc writes %v, want the second date still in there", date.DCValues)
+	}
+}
