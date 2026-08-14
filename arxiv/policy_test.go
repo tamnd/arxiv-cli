@@ -123,6 +123,14 @@ var requestSites = map[string]string{
 	// redirectTarget follows one trackback link with HEAD, to see where it
 	// lands without pulling down the page at the other end.
 	"redirectTarget": "waits",
+	// The one deliberately unpaced request in the module, and it is a test
+	// rather than a code path. It goes fast on purpose to make arxiv.org answer
+	// 429 so the backoff can be tested against the real thing, and it is behind
+	// both the live build tag and -provoke-rate-limit. It uses a bare
+	// http.Client rather than this package's, because this package's refuses to
+	// go under the fifteen second floor and that refusal is what everything
+	// else relies on.
+	"TestLiveRateLimitBacksOffAndCompletes": "provokes a 429 on purpose, behind a tag and a flag",
 }
 
 // TestEveryRequestGoesThroughTheLimiter is the pacing promise made structural.
