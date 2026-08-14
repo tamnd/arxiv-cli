@@ -67,9 +67,9 @@ func registerID(app *kit.App) {
 		Long: `Classify an arXiv reference and print everything it says about itself.
 
 Takes a bare id in either style, a versioned id, the arXiv: form journals print,
-any arxiv.org URL, an oai:arXiv.org: identifier, or the arXiv DOI, and prints the
-canonical id, the style, the submission month, the DOI, the OAI identifier and
-the ax:// URI.
+any arxiv.org URL, an oai:arXiv.org: identifier, the arXiv DOI, or an ax:// URI
+this tool printed earlier, and prints the canonical id, the style, the
+submission month, the DOI, the OAI identifier and the ax:// URI.
 
 Nothing here is fetched. A well-formed id says when it was submitted and what
 its DOI is; it does not say whether the paper exists, and only a request can

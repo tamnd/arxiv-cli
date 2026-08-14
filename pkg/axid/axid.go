@@ -93,13 +93,13 @@ var urlPathPrefixes = []string{
 	"/abs/", "/pdf/", "/html/", "/format/", "/src/", "/e-print/", "/ps/", "/tb/",
 }
 
-// Parse reads any of the nine ways an arXiv paper gets referred to and returns
+// Parse reads any of the ten ways an arXiv paper gets referred to and returns
 // the canonical id.
 //
 // Accepted: a bare new-style id, a bare old-style id, either with a version,
 // the arXiv:NNNN.NNNNN citation form journals print, any arxiv.org URL, an
-// oai:arXiv.org: identifier, and the arXiv DOI with or without a doi: or
-// https://doi.org/ wrapper.
+// oai:arXiv.org: identifier, the arXiv DOI with or without a doi: or
+// https://doi.org/ wrapper, and this tool's own ax://paper/ URI.
 func Parse(ref string) (ID, error) {
 	raw := strings.TrimSpace(ref)
 	if raw == "" {
@@ -140,9 +140,23 @@ func unwrap(s string) (string, error) {
 
 	case strings.HasPrefix(lower, "arxiv:"):
 		return s[len("arxiv:"):], nil
+
+	case strings.HasPrefix(lower, paperURIPrefix):
+		// Every record prints its own ax:// URI, so every record should be
+		// something you can paste back in. The version rides as the fragment
+		// #v7 rather than in the path, because that is how graph.Version names
+		// it, and a version is a part of a paper rather than another paper.
+		rest := s[len(paperURIPrefix):]
+		if id, n, ok := strings.Cut(rest, "#v"); ok {
+			return id + "v" + n, nil
+		}
+		return rest, nil
 	}
 	return s, nil
 }
+
+// paperURIPrefix is ax://paper/ folded once, since unwrap runs on every parse.
+var paperURIPrefix = strings.ToLower(graph.Scheme + graph.KindPaper + "/")
 
 // oaiPrefixLower is OAIPrefix folded once, since the prefix check runs on
 // every parse and the constant is mixed case.

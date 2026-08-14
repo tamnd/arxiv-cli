@@ -222,6 +222,10 @@ var Sorts = []Sort{SortRelevance, SortSubmitted, SortUpdated}
 
 // ParseSort resolves a sort, accepting arXiv's own spelling and the short one a
 // flag would use.
+//
+// "date" is the v0.1.0 spelling of what is now "submitted". It still works,
+// because breaking a script over a synonym is a poor trade, and the error
+// message names the current one.
 func ParseSort(s string) (Sort, error) {
 	switch strings.ToLower(strings.TrimSpace(s)) {
 	case "", "relevance":
@@ -231,7 +235,7 @@ func ParseSort(s string) (Sort, error) {
 	case "updated", "lastupdated", "lastupdateddate":
 		return SortUpdated, nil
 	}
-	return "", fmt.Errorf("sort order %q is not one of relevance, date and updated", s)
+	return "", fmt.Errorf("sort order %q is not one of relevance, submitted and updated", s)
 }
 
 // Order is the direction a sort runs in.

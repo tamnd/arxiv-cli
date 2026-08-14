@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// TestShapes walks the nine reference shapes from spec 3006 doc 04 section 1.
+// TestShapes walks the reference shapes from spec 3006 doc 04 section 1.
 // Every one of them names a real paper, so the expectations here can be checked
 // against arxiv.org by hand when one of them looks wrong.
 func TestShapes(t *testing.T) {
@@ -370,10 +370,10 @@ func TestRoundTrip(t *testing.T) {
 			id.OAI(),
 			id.AbsURL(),
 			id.PDFURL(),
+			id.URI(),
 			"https://doi.org/" + id.DOI(),
 			"https://arxiv.org/html/" + id.Canonical,
 		}
-		// The URI is not a parse input, so it is checked by shape instead.
 		if got := id.URI(); got != "ax://paper/"+want {
 			t.Errorf("URI = %q, want ax://paper/%s", got, want)
 		}
@@ -386,6 +386,50 @@ func TestRoundTrip(t *testing.T) {
 			if back.Canonical != want {
 				t.Errorf("Parse(%q).Canonical = %q, want %q", form, back.Canonical, want)
 			}
+		}
+	}
+}
+
+// TestURIParsesBack is the round trip for this tool's own node names. Every
+// record prints one, and a record that names something the same tool cannot
+// read back is a dead end.
+func TestURIParsesBack(t *testing.T) {
+	cases := []struct {
+		uri       string
+		canonical string
+		version   int
+	}{
+		{"ax://paper/1706.03762", "1706.03762", 0},
+		{"ax://paper/1706.03762#v7", "1706.03762", 7},
+		{"ax://paper/hep-th/9711200", "hep-th/9711200", 0},
+		{"ax://paper/hep-th/9711200#v3", "hep-th/9711200", 3},
+		{"ax://paper/cond-mat.supr-con/9910001", "cond-mat/9910001", 0},
+	}
+	for _, tc := range cases {
+		id, err := Parse(tc.uri)
+		if err != nil {
+			t.Errorf("Parse(%q): %v", tc.uri, err)
+			continue
+		}
+		if id.Canonical != tc.canonical {
+			t.Errorf("Parse(%q).Canonical = %q, want %q", tc.uri, id.Canonical, tc.canonical)
+		}
+		if id.Version != tc.version {
+			t.Errorf("Parse(%q).Version = %d, want %d", tc.uri, id.Version, tc.version)
+		}
+	}
+
+	// The other node kinds are not papers, and reading one as a paper would
+	// invent a paper out of an author or a category.
+	for _, bad := range []string{
+		"ax://name/john-baez",
+		"ax://category/cs.CL",
+		"ax://author/baez_j_1",
+		"ax://paper/",
+		"ax://paper/not-an-id",
+	} {
+		if _, err := Parse(bad); err == nil {
+			t.Errorf("Parse(%q) accepted something that is not a paper", bad)
 		}
 	}
 }
