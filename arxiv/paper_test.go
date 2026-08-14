@@ -28,32 +28,88 @@ func fullRecord(t *testing.T) Paper {
 	return p
 }
 
-// TestGoldenFullPaper pins the record a full read produces, field by field.
+// The three full records the suite has, each a shape the others do not cover.
+//
+// The point of having three rather than one is that a mapping change usually
+// looks fine on the paper it was written against. Eight named authors and seven
+// versions is not the same read as one author who is a collaboration, and
+// neither is the same as an id with a slash in it from before arXiv had
+// licences.
+var goldenRecords = []struct {
+	file  string
+	build func(*testing.T) Paper
+}{
+	// Eight authors, two categories, seven versions with sizes and source
+	// types, a licence and a comment.
+	{"golden_1706.03762_full.json", fullRecord},
+	// One author and it is a collaboration, a journal reference, a publisher
+	// DOI, two versions with no source type on either, and the two dates a
+	// month apart that dates_test.go is about.
+	{"golden_1207.7214_full.json", higgsRecord},
+	// An old style id, an archive with no dot in it as its category, three
+	// versions, and no licence because the paper is from 1997.
+	{"golden_hep-th_9711200_full.json", oldRecord},
+}
+
+// TestGoldenRecords pins what a full read produces, field by field.
 //
 // The per-surface tests each check one merge. This checks what a caller
 // actually receives, so a change to any of the four mappings shows up as a diff
-// on one file rather than as a passing test suite and a different JSON.
-func TestGoldenFullPaper(t *testing.T) {
-	got, err := json.MarshalIndent(fullRecord(t), "", "  ")
-	if err != nil {
-		t.Fatalf("marshal: %v", err)
-	}
-	got = append(got, '\n')
-
-	path := filepath.Join("testdata", "golden_1706.03762_full.json")
-	if *update {
-		if err := os.WriteFile(path, got, 0o644); err != nil {
-			t.Fatalf("write golden: %v", err)
+// on a file rather than as a passing test suite and a different JSON.
+func TestGoldenRecords(t *testing.T) {
+	for _, g := range goldenRecords {
+		got, err := json.MarshalIndent(g.build(t), "", "  ")
+		if err != nil {
+			t.Fatalf("%s: marshal: %v", g.file, err)
 		}
-		t.Logf("wrote %s", path)
-		return
+		got = append(got, '\n')
+
+		path := filepath.Join("testdata", g.file)
+		if *update {
+			if err := os.WriteFile(path, got, 0o644); err != nil {
+				t.Fatalf("write %s: %v", g.file, err)
+			}
+			t.Logf("wrote %s", path)
+			continue
+		}
+		want, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v (run with -update to write it)", g.file, err)
+		}
+		if string(got) != string(want) {
+			t.Errorf("%s changed. Run go test ./arxiv -run Golden -update and read the diff.\n\ngot:\n%s", g.file, got)
+		}
 	}
-	want, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read golden: %v (run with -update to write it)", err)
-	}
-	if string(got) != string(want) {
-		t.Errorf("the record changed. Run go test ./arxiv -run Golden -update and read the diff.\n\ngot:\n%s", got)
+}
+
+// A golden file is only worth having if it is read back. This checks the record
+// round trips through the JSON, because the fields that break are the ones with
+// a custom marshal on them and they break silently in one direction.
+func TestAGoldenRecordReadsBackAsItself(t *testing.T) {
+	for _, g := range goldenRecords {
+		want := g.build(t)
+		raw, err := os.ReadFile(filepath.Join("testdata", g.file))
+		if err != nil {
+			t.Fatalf("read %s: %v", g.file, err)
+		}
+		var got Paper
+		if err := json.Unmarshal(raw, &got); err != nil {
+			t.Fatalf("%s does not decode into a Paper: %v", g.file, err)
+		}
+		if got.ID != want.ID || got.Title != want.Title {
+			t.Errorf("%s decodes to %q titled %q", g.file, got.ID, got.Title)
+		}
+		if !got.FirstSubmitted.Equal(want.FirstSubmitted) {
+			t.Errorf("%s: first_submitted came back as %s, want %s", g.file, got.FirstSubmitted, want.FirstSubmitted)
+		}
+		if len(got.Versions) != len(want.Versions) || len(got.Authors) != len(want.Authors) {
+			t.Errorf("%s: %d versions and %d authors, want %d and %d",
+				g.file, len(got.Versions), len(got.Authors), len(want.Versions), len(want.Authors))
+		}
+		if len(got.Surfaces) != len(want.Surfaces) || len(got.Sources) != len(want.Sources) {
+			t.Errorf("%s: provenance did not survive the round trip: %v over %v",
+				g.file, got.Surfaces, got.Sources)
+		}
 	}
 }
 

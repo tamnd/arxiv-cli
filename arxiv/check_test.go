@@ -47,6 +47,8 @@ func higgsRecord(t *testing.T) Paper {
 	p := paperFixture(t, "api_1207.7214.xml")
 	mergeOAIArxiv(&p, oaiFixture(t, "oai_arxiv_1207.7214.xml"),
 		"https://oaipmh.arxiv.org/oai?identifier=oai%3AarXiv.org%3A1207.7214&metadataPrefix=arXiv")
+	mergeOAIRaw(&p, oaiFixture(t, "oai_raw_1207.7214.xml"),
+		"https://oaipmh.arxiv.org/oai?identifier=oai%3AarXiv.org%3A1207.7214&metadataPrefix=arXivRaw")
 	mergeAbs(&p, absFixture(t, "abs_1207.7214.html"), "https://arxiv.org/abs/1207.7214")
 	annotateDepth(&p, DepthFull)
 	return p

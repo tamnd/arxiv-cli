@@ -1,0 +1,95 @@
+{
+  "kind": "paper",
+  "surfaces": [
+    "s1",
+    "s2",
+    "s3"
+  ],
+  "sources": [
+    "https://export.arxiv.org/api/query",
+    "https://oaipmh.arxiv.org/oai?identifier=oai%3AarXiv.org%3Ahep-th%2F9711200\u0026metadataPrefix=arXiv",
+    "https://oaipmh.arxiv.org/oai?identifier=oai%3AarXiv.org%3Ahep-th%2F9711200\u0026metadataPrefix=arXivRaw",
+    "https://arxiv.org/abs/hep-th/9711200"
+  ],
+  "retrieved_at": "2026-08-06T12:00:00Z",
+  "via": {
+    "abstract": "s1",
+    "authors": "s2",
+    "categories": "s1",
+    "comment": "s1",
+    "first_submitted": "s1",
+    "has_source": "s3",
+    "journal_ref": "s1",
+    "last_updated": "s1",
+    "license": "s3",
+    "oai_datestamp": "s2",
+    "publisher_doi": "s1",
+    "report_no": "s2",
+    "subject_names": "s3",
+    "submitter": "s2",
+    "title": "s1",
+    "versions": "s2"
+  },
+  "missed": [
+    "affiliations, the licence name and the section tree were not read; arxiv paper hep-th/9711200 --depth text reads them"
+  ],
+  "id": "hep-th/9711200",
+  "version": 3,
+  "is_latest": true,
+  "versioned_id": "hep-th/9711200v3",
+  "oai_id": "oai:arXiv.org:hep-th/9711200",
+  "doi": "10.48550/arXiv.hep-th/9711200",
+  "publisher_doi": "10.1023/A:1026654312961",
+  "url": "https://arxiv.org/abs/hep-th/9711200v3",
+  "style": "old",
+  "title": "The Large N Limit of Superconformal Field Theories and Supergravity",
+  "abstract": "We show that the large $N$ limit of certain conformal field theories in various dimensions include in their Hilbert space a sector describing supergravity on the product of Anti-deSitter spacetimes, spheres and other compact manifolds. This is shown by taking some branes in the full M/string theory and then taking a low energy limit where the field theory on the brane decouples from the bulk. We observe that, in this limit, we can still trust the near horizon geometry for large $N$. The enhanced supersymmetries of the near horizon geometry correspond to the extra supersymmetry generators present in the superconformal group (as opposed to just the super-Poincare group). The 't Hooft limit of 4-d ${\\cal N} =4$ super-Yang-Mills at the conformal point is shown to contain strings: they are IIB strings. We conjecture that compactifications of M/string theory on various Anti-deSitter spacetimes are dual to various conformal field theories. This leads to a new proposal for a definition of M-theory which could be extended to include five non-compact dimensions.",
+  "comment": "20 pages, harvmac, v2: section on AdS_2 corrected, references added, v3: More references and a sign in eqns 2.8 and 2.9 corrected",
+  "journal_ref": "Adv.Theor.Math.Phys.2:231-252,1998",
+  "report_no": "HUTP-98/A097",
+  "authors": [
+    {
+      "name": "Juan M. Maldacena",
+      "keyname": "Maldacena",
+      "forenames": "Juan M.",
+      "via": "s2"
+    }
+  ],
+  "primary_category": "hep-th",
+  "categories": [
+    "hep-th"
+  ],
+  "subject_names": {
+    "hep-th": "High Energy Physics - Theory"
+  },
+  "first_submitted": "1997-11-27T23:53:13Z",
+  "last_updated": "1998-01-22T15:42:41Z",
+  "oai_datestamp": "2014-11-17T00:00:00Z",
+  "versions": [
+    {
+      "version": 1,
+      "date": "1997-11-27T23:53:13Z",
+      "size_bytes": 21504,
+      "via": "s2"
+    },
+    {
+      "version": 2,
+      "date": "1997-12-08T18:59:11Z",
+      "size_bytes": 23552,
+      "via": "s2"
+    },
+    {
+      "version": 3,
+      "date": "1998-01-22T15:42:41Z",
+      "size_bytes": 23552,
+      "via": "s2"
+    }
+  ],
+  "license": "http://arxiv.org/licenses/assumed-1991-2003/",
+  "pdf_url": "https://arxiv.org/pdf/hep-th/9711200v3",
+  "has_html": false,
+  "has_source": true,
+  "submitter": "Juan Maldacena",
+  "withdrawn": false,
+  "depth": "full"
+}
