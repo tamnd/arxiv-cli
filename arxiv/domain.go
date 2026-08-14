@@ -446,7 +446,11 @@ until the feed's own pubDate says the next announcement is due.`,
 }
 
 type paperIn struct {
-	ID     string  `kit:"arg" help:"an arXiv id, a versioned id, or an abs URL"`
+	// The name is spelled out because kit derives a parameter name from the
+	// field name, and ID snakes to i_d. The command line reads the argument
+	// positionally and never noticed, but an HTTP route taking ?i_d= and an MCP
+	// tool with an i_d argument are both wrong.
+	ID     string  `kit:"arg,name=id" help:"an arXiv id, a versioned id, or an abs URL"`
 	Depth  string  `kit:"flag" default:"meta" enum:"quick,meta,full,text" help:"how many surfaces to read"`
 	Client *Client `kit:"inject"`
 }
