@@ -2,6 +2,7 @@ package arxiv
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -213,6 +214,34 @@ func TestNoRetryOnClientError(t *testing.T) {
 				t.Errorf("server saw %d requests, want 1", got)
 			}
 		})
+	}
+}
+
+// TestA404CarriesTheSentinel is the regression test for a 404 that read as a
+// failure everywhere it mattered.
+//
+// Four places in this package decide whether a missing surface is fatal by
+// asking errors.Is(err, ErrNotFound): the two OAI reads and the two page reads
+// in deepen, the walk, and the crawl. The transport used to answer that with a
+// classified error carrying the right exit code and no cause, so the answer was
+// no, and a paper whose abstract page had gone missing came back as an error
+// rather than as the record the API had already given.
+func TestA404CarriesTheSentinel(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer ts.Close()
+
+	c, _ := newRetryClient(t, ts)
+	_, err := c.fetch(context.Background(), ts.URL, 0)
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("a 404 came back as %v, which errors.Is does not match against ErrNotFound", err)
+	}
+	if kind := errs.KindOf(err); kind != errs.KindNotFound {
+		t.Errorf("a 404 is kind %v, and the exit code comes from that", kind)
 	}
 }
 

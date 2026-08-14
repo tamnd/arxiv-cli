@@ -1,0 +1,19 @@
+HTTP/2 206 
+content-disposition: inline; filename="1706.03762v7.pdf"
+etag: "sha256:2dec5e68ae1f3fd90a82678deab4944bef4114beab661b04bd8b9ee725273072"
+server: Google Frontend
+via: 1.1 google, 1.1 varnish, 1.1 varnish, 1.1 varnish
+link: <https://arxiv.org/pdf/1706.03762>; rel='canonical'
+content-type: application/pdf
+last-modified: Fri, 12 Apr 2024 23:47:34 GMT
+x-cloud-trace-context: 7c3e789c6fbcf14eeed09792b90575c0
+access-control-allow-origin: *
+accept-ranges: bytes
+age: 751699
+date: Fri, 14 Aug 2026 02:57:09 GMT
+x-served-by: cache-lga21970-LGA, cache-lga21970-LGA, cache-lga21980-LGA, cache-hkg17934-HKG
+x-cache: MISS, HIT, HIT
+x-timer: S1786676229.311928,VS0,VE2
+content-range: bytes 0-0/2215244
+content-length: 1
+

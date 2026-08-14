@@ -1,0 +1,18 @@
+HTTP/2 206 
+last-modified: Tue, 11 Aug 2026 19:31:32 GMT
+etag: "CKHajKWomZYDEAE="
+access-control-allow-origin: *
+link: <https://arxiv.org/html/1706.03762>; rel='canonical'
+content-type: text/html; charset=utf-8
+x-robots-tag: nofollow
+via: 1.1 google, 1.1 varnish, 1.1 varnish, 1.1 varnish
+server: Google Frontend
+accept-ranges: bytes
+age: 134584
+content-range: bytes 0-0/187244
+date: Fri, 14 Aug 2026 02:59:34 GMT
+x-served-by: cache-lga21983-LGA, cache-lga21983-LGA, cache-lga21983-LGA, cache-nrt-rjtt7900062-NRT
+x-cache: MISS, HIT, HIT
+x-timer: S1786676374.167139,VS0,VE2
+content-length: 1
+

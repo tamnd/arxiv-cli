@@ -234,8 +234,13 @@ func (c *Client) try(ctx context.Context, rawURL string) ([]byte, verdict) {
 		}
 
 	case resp.StatusCode == http.StatusNotFound:
+		// ErrNotFound is the cause rather than the message, because the whole
+		// package asks errors.Is(err, ErrNotFound) before deciding a missing
+		// surface is fatal. A bare errs.NotFound answers that question with no,
+		// which turned a 404 on the abstract page into a failed read of a paper
+		// the API had already answered for.
 		return nil, verdict{
-			err:    errs.NotFound("arxiv has nothing at %s", rawURL),
+			err:    errs.Wrap(errs.KindNotFound, ErrNotFound, "arxiv has nothing at %s", rawURL),
 			status: resp.StatusCode,
 		}
 

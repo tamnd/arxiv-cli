@@ -73,6 +73,14 @@ type oaiHeader struct {
 	// Status is "deleted" on a withdrawn paper. arXiv's deletedRecord policy is
 	// persistent, so a withdrawn paper comes back with a header and no
 	// metadata rather than vanishing.
+	//
+	// There is no fixture for one, and it is not for want of looking. On
+	// 2026-08-14 a ListIdentifiers sweep of thirty-eight fortnights spread over
+	// 2006 to 2026, about two hundred thousand headers, came back with not one
+	// status="deleted" among them. Identify still declares the policy, so the
+	// field is read and mapped, and this note is here so the next person does
+	// not spend an afternoon rediscovering that arXiv appears never to have
+	// used it.
 	Status     string   `xml:"status,attr"`
 	Identifier string   `xml:"identifier"`
 	Datestamp  string   `xml:"datestamp"`
