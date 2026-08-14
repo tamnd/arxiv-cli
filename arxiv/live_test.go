@@ -16,7 +16,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"flag"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1947,5 +1949,205 @@ func TestLiveTheDateRowStillDisagrees(t *testing.T) {
 	}
 	if !contains(date.DCValues, "2012-08-31") {
 		t.Errorf("oai_dc writes %v, want the second date still in there", date.DCValues)
+	}
+}
+
+// TestLiveTwoHundredIDsInOneRequest checks the batch size still holds.
+//
+// MaxIDsPerRequest is 200 and the number came from measurement rather than from
+// documentation: 300 ids answered 200 with 300 entries, 400 answered 400 with
+// an HTML body, and 200 leaves headroom for old style ids, which are longer.
+// arXiv has never published a limit, so the day it lowers one there will be no
+// announcement and every hydrate of a known list will start failing in batches.
+//
+// The ids are read live rather than listed here, because a hard coded list of
+// 200 would eventually include a paper that was withdrawn and the test would
+// fail for the wrong reason.
+func TestLiveTwoHundredIDsInOneRequest(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+
+	feed, err := c.Do(ctx, Request{
+		Query: Term(FieldCategory, "cs.CL"),
+		Max:   MaxIDsPerRequest,
+		Sort:  SortSubmitted,
+		Order: Ascending,
+	}, 0)
+	if err != nil {
+		t.Fatalf("read %d ids to ask for: %v", MaxIDsPerRequest, err)
+	}
+	if len(feed.Entries) != MaxIDsPerRequest {
+		t.Fatalf("asked for %d entries and got %d, so this is not a %d id test",
+			MaxIDsPerRequest, len(feed.Entries), MaxIDsPerRequest)
+	}
+
+	ids := make([]string, 0, len(feed.Entries))
+	for _, e := range feed.Entries {
+		p := entryToPaper(e, apiBase, c.now())
+		ids = append(ids, p.ID)
+	}
+
+	// One batch, which is the point. If the cut on encoded length has started
+	// splitting a run of new style ids, the length ceiling is wrong.
+	batches := BatchIDs(ids)
+	if len(batches) != 1 {
+		t.Fatalf("%d ids came out as %d batches, so one request is no longer enough",
+			len(ids), len(batches))
+	}
+
+	papers, err := c.Papers(ctx, ids)
+	if err != nil {
+		t.Fatalf("id_list of %d: %v", len(ids), err)
+	}
+	if len(papers) != len(ids) {
+		t.Errorf("asked for %d ids and got %d papers back", len(ids), len(papers))
+	}
+
+	seen := map[string]bool{}
+	for _, p := range papers {
+		if p.Title == "" {
+			t.Errorf("%s came back with no title", p.ID)
+		}
+		if seen[p.ID] {
+			t.Errorf("%s came back twice", p.ID)
+		}
+		seen[p.ID] = true
+	}
+	for _, id := range ids {
+		if !seen[id] {
+			t.Errorf("asked for %s and it is not in the answer", id)
+		}
+	}
+	t.Logf("%d ids in one request, %d papers back", len(ids), len(papers))
+}
+
+// TestLiveTermAndCategoryTogetherStillCount is the acceptance case, live.
+//
+// A free text term with --cat is the query the old tool got wrong: it sent the
+// whole thing escaped as one string and arXiv answered zero results, which
+// reads exactly like a search that matched nothing. A count is the assertion
+// worth making because zero is the failure, and there is no way to tell a
+// broken query from an empty one by looking at the papers.
+func TestLiveTermAndCategoryTogetherStillCount(t *testing.T) {
+	c := liveClient(t)
+	ctx := context.Background()
+
+	opts := SearchOptions{Query: "attention", Categories: []string{"cs.CL"}, Limit: 5}
+	q, err := searchQuery(opts)
+	if err != nil {
+		t.Fatalf("build the query: %v", err)
+	}
+	n, err := c.Count(ctx, q)
+	if err != nil {
+		t.Fatalf("count %s: %v", q, err)
+	}
+	if n == 0 {
+		t.Fatalf("%s counted nothing, which is what a broken query looks like", q)
+	}
+	t.Logf("%s: %d results", q, n)
+
+	papers, err := c.Search(ctx, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(papers) != 5 {
+		t.Fatalf("got %d papers, want the five that were asked for", len(papers))
+	}
+	for _, p := range papers {
+		if p.PrimaryCategory != "cs.CL" && !contains(p.Categories, "cs.CL") {
+			t.Errorf("%s is in %v, none of them cs.CL", p.ID, p.Categories)
+		}
+	}
+}
+
+// provoke gates the one test in this file that is rude.
+//
+//	go test ./arxiv -tags live -run RateLimit -provoke-rate-limit -v
+//
+// Every other live test reads arXiv at the pace arXiv asks for. This one goes
+// faster on purpose to make arxiv.org answer 429, and doing that on a schedule
+// is the behaviour robots.txt is asking people not to have. It is here because
+// the backoff is otherwise only tested against a server this package writes,
+// and a handler that returns 429 because a test told it to proves nothing about
+// what arXiv actually sends. Run it when the transport changes, not otherwise.
+var provoke = flag.Bool("provoke-rate-limit", false, "deliberately trip arxiv.org's rate limit")
+
+// TestLiveRateLimitBacksOffAndCompletes trips the HTML plane's 429 and then
+// reads a page through the client.
+//
+// The 429 arXiv sends is the awkward kind: no Retry-After, no JSON, a fourteen
+// byte body reading "Rate exceeded." and then roughly 45 seconds of the same
+// answer to everything. Nothing in the response says how long to wait, so the
+// client holds the whole plane rather than the request, and this is the test
+// that the hold is long enough and that the read finishes rather than giving up.
+//
+// The provoking is done with a bare client, not this one, because this one
+// refuses to go below the fifteen second floor and that refusal is the thing
+// being relied on everywhere else.
+func TestLiveRateLimitBacksOffAndCompletes(t *testing.T) {
+	if !*provoke {
+		t.Skip("pass -provoke-rate-limit to run this; it hammers arxiv.org on purpose")
+	}
+
+	bare := &http.Client{Timeout: 30 * time.Second}
+	tripped := false
+	for i := 0; i < 12 && !tripped; i++ {
+		req, err := http.NewRequest(http.MethodGet, listBase+"cs.CL/2026-01?skip=0&show=25", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("User-Agent", DefaultUserAgent)
+		resp, err := bare.Do(req)
+		if err != nil {
+			t.Fatalf("request %d: %v", i+1, err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		t.Logf("request %d: %d, %d bytes", i+1, resp.StatusCode, len(body))
+		if resp.StatusCode == http.StatusTooManyRequests {
+			tripped = true
+			if got := strings.TrimSpace(string(body)); got != "Rate exceeded." {
+				t.Errorf("the 429 body reads %q, and the fixture says %q", got, "Rate exceeded.")
+			}
+		}
+	}
+	if !tripped {
+		t.Skip("twelve requests in a row drew no 429, so arXiv has changed what it enforces")
+	}
+
+	// Now read a page through the client, which arrives into a plane that is
+	// being refused, and check it comes back rather than failing.
+	c := liveClient(t)
+	var statuses []int
+	c.Watch(func(r Read) { statuses = append(statuses, r.Status) })
+	defer c.Watch(nil)
+
+	start := time.Now()
+	p, err := c.PaperAt(context.Background(), "1706.03762", PaperOptions{Depth: DepthFull})
+	took := time.Since(start)
+	if err != nil {
+		t.Fatalf("a read into a rate limited plane failed after %s: %v", took, err)
+	}
+	if p.Title == "" {
+		t.Error("the read completed and returned a paper with no title")
+	}
+	t.Logf("read completed in %s over %d requests: %v", took, len(statuses), statuses)
+
+	// It either waited out the hold or was never refused. Both are fine, and
+	// which one happened is worth printing, because a run that saw no 429 at
+	// all is not evidence the backoff works.
+	saw429 := false
+	for _, s := range statuses {
+		if s == http.StatusTooManyRequests {
+			saw429 = true
+		}
+	}
+	if saw429 {
+		t.Logf("the client was refused and waited it out")
+	} else {
+		t.Logf("the client was not refused; the hold outlasted arXiv's window")
+	}
+	if statuses[len(statuses)-1] != http.StatusOK {
+		t.Errorf("the last request answered %d", statuses[len(statuses)-1])
 	}
 }
