@@ -87,6 +87,10 @@ func (Domain) Register(app *kit.App) {
 	registerGraph(app)
 	registerPredicates(app)
 	registerPlanes(app)
+	registerSurfaces(app)
+	registerRoutes(app)
+	registerGrammar(app)
+	registerFields(app)
 }
 
 // newClient is the factory kit calls once per run. An unset framework flag
