@@ -1967,11 +1967,18 @@ func TestLiveTwoHundredIDsInOneRequest(t *testing.T) {
 	c := liveClient(t)
 	ctx := context.Background()
 
+	// Newest first, and that is not a detail. Ascending on a category with
+	// ninety thousand papers in it makes arXiv sort the whole set to hand back
+	// the oldest two hundred, and export.arxiv.org answers that with a 503 or a
+	// 429 rather than with a feed, measured 2026-08-14. Descending is the cheap
+	// direction and it is also the direction that keeps the ids new style:
+	// cs.CL inherited the old cmp-lg archive, and two hundred ids of the shape
+	// cmp-lg/9410009v1 do not fit in one request line.
 	feed, err := c.Do(ctx, Request{
 		Query: Term(FieldCategory, "cs.CL"),
 		Max:   MaxIDsPerRequest,
 		Sort:  SortSubmitted,
-		Order: Ascending,
+		Order: Descending,
 	}, 0)
 	if err != nil {
 		t.Fatalf("read %d ids to ask for: %v", MaxIDsPerRequest, err)
@@ -1993,6 +2000,15 @@ func TestLiveTwoHundredIDsInOneRequest(t *testing.T) {
 	if len(batches) != 1 {
 		t.Fatalf("%d ids came out as %d batches, so one request is no longer enough",
 			len(ids), len(batches))
+	}
+
+	// The ceiling the batcher is cutting under is a real one. arXiv answers a
+	// request line over 4094 bytes with "Request Line is too large", measured
+	// 2026-08-14, so a batch that fits with no headroom is a batch that stops
+	// fitting the first time an old style id turns up in the list.
+	if used := encodedLen(ids); used > maxURLLen {
+		t.Errorf("%d ids encode to %d bytes, over the %d the batcher cuts at",
+			len(ids), used, maxURLLen)
 	}
 
 	papers, err := c.Papers(ctx, ids)
