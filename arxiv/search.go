@@ -195,15 +195,102 @@ func searchQuery(o SearchOptions) (Query, error) {
 		return Raw(o.Raw), nil
 	}
 
-	terms := make([]Query, 0, 8)
-	for _, w := range strings.Fields(o.Query) {
-		terms = append(terms, Term(FieldAll, w))
-	}
-	terms = append(terms, fieldTerms(o)...)
+	rest := fieldTerms(o)
 	if cats := categoryTerm(o.Categories); !cats.Empty() {
-		terms = append(terms, cats)
+		rest = append(rest, cats)
 	}
+
+	terms := make([]Query, 0, len(rest)+8)
+	if q := strings.TrimSpace(o.Query); q != "" {
+		if isGrammar(q) {
+			// The positional is already arXiv's grammar, so it goes out as
+			// written. Prefixing every word with all: is what turned
+			// ti:"attention is all you need" AND cat:cs.CL into
+			// all:ti:"attention AND all:is AND ... AND all:AND AND
+			// all:cat:cs.CL, which arXiv answers with "Invalid query string".
+			//
+			// It still composes, unlike --raw. --raw is the flag that promises
+			// untouched; a query typed as an argument is one clause among the
+			// flags, so it is parenthesised before anything is ANDed onto it
+			// and a top level OR inside it keeps meaning what it looks like.
+			if len(rest) > 0 {
+				q = "(" + q + ")"
+			}
+			terms = append(terms, Raw(q))
+		} else {
+			for _, w := range splitTerms(q) {
+				terms = append(terms, Term(FieldAll, w))
+			}
+		}
+	}
+	terms = append(terms, rest...)
 	return And(terms...), nil
+}
+
+// operators are the three booleans arXiv spells out. ANDNOT is one word there.
+var operators = map[string]bool{"AND": true, "OR": true, "ANDNOT": true}
+
+// isGrammar reports whether a query was typed in arXiv's own grammar rather
+// than as words to look for.
+//
+// The tell is a field prefix at the front of a term or a bare operator between
+// them, and both are things nobody types by accident: a search for the word
+// "AND" is a search for the commonest word in the index, and a term beginning
+// ti: is a term beginning with one of nine strings arXiv reserves. Anything
+// else, quotes and all, is words.
+func isGrammar(s string) bool {
+	for _, tok := range splitTerms(s) {
+		if operators[tok] {
+			return true
+		}
+		// A term can be wrapped in parentheses on either side, and the prefix
+		// sits inside them.
+		tok = strings.TrimLeft(tok, "(")
+		prefix, _, ok := strings.Cut(tok, ":")
+		if !ok {
+			continue
+		}
+		for _, f := range Fields {
+			if prefix == string(f) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// splitTerms cuts a query on whitespace, keeping a quoted phrase whole.
+//
+// strings.Fields would cut "attention is all you need" into five terms, and
+// five terms ANDed is not the phrase the quotes asked for. An unclosed quote is
+// closed at the end rather than refused, because arXiv reads it that way too
+// and a half typed quote is a typo, not a question worth failing on.
+func splitTerms(s string) []string {
+	var out []string
+	var cur strings.Builder
+	quoted := false
+	flush := func() {
+		if cur.Len() > 0 {
+			out = append(out, cur.String())
+			cur.Reset()
+		}
+	}
+	for _, r := range s {
+		switch {
+		case r == '"':
+			quoted = !quoted
+			cur.WriteRune(r)
+		case !quoted && (r == ' ' || r == '\t' || r == '\n' || r == '\r'):
+			flush()
+		default:
+			cur.WriteRune(r)
+		}
+	}
+	if quoted {
+		cur.WriteRune('"')
+	}
+	flush()
+	return out
 }
 
 // fieldTerms is the field-scoped flags as query terms, nil when none was given.
