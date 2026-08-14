@@ -252,14 +252,22 @@ func TestNoDirectCommandFrameworks(t *testing.T) {
 	}
 }
 
-// TestGoVersionPinned holds the toolchain the spec asks for. A patch version
-// rather than a minor one, so a build reproduces.
+// TestGoVersionPinned holds the toolchain to a patch version rather than a
+// minor one, so a build reproduces.
+//
+// The spec asked for 1.26.5 and this is 1.26.6, because govulncheck found five
+// standard library advisories against 1.26.5 on 2026-08-14, all of them on code
+// this tool actually calls: net/url and net/http through the trackback
+// redirect, crypto/tls through every request, encoding/xml through the feed
+// parser and encoding/asn1 through the certificate chain. The go directive is
+// what setup-go and GoReleaser resolve the build toolchain from, so bumping it
+// here is what makes the shipped binary the patched one.
 func TestGoVersionPinned(t *testing.T) {
 	mod, err := os.ReadFile(filepath.Join("..", "go.mod"))
 	if err != nil {
 		t.Fatalf("read go.mod: %v", err)
 	}
-	if !strings.Contains(string(mod), "\ngo 1.26.5\n") {
-		t.Error("go.mod should pin go 1.26.5")
+	if !strings.Contains(string(mod), "\ngo 1.26.6\n") {
+		t.Error("go.mod should pin go 1.26.6")
 	}
 }

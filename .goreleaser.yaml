@@ -58,7 +58,7 @@ nfpms:
     vendor: tamnd
     homepage: https://github.com/tamnd/arxiv-cli
     maintainer: Duc-Tam Nguyen <tamnd87@gmail.com>
-    description: A command line for arXiv.
+    description: Read arXiv's twelve public surfaces from the command line, with no API key.
     license: Apache-2.0
     formats:
       - deb
@@ -82,7 +82,7 @@ dockers_v2:
       - linux/arm64
     labels:
       org.opencontainers.image.title: "{{ .ProjectName }}"
-      org.opencontainers.image.description: "A command line for arXiv."
+      org.opencontainers.image.description: "Read arXiv's twelve public surfaces from the command line, with no API key."
       org.opencontainers.image.url: "https://github.com/tamnd/arxiv-cli"
       org.opencontainers.image.source: "https://github.com/tamnd/arxiv-cli"
       org.opencontainers.image.version: "{{ .Version }}"
@@ -97,7 +97,7 @@ homebrew_casks:
       token: '{{ envOrDefault "HOMEBREW_TAP_GITHUB_TOKEN" "" }}'
     directory: Casks
     homepage: https://github.com/tamnd/arxiv-cli
-    description: A command line for arXiv.
+    description: Read arXiv's twelve public surfaces from the command line, with no API key.
     skip_upload: '{{ if envOrDefault "HOMEBREW_TAP_GITHUB_TOKEN" "" }}false{{ else }}true{{ end }}'
     commit_author:
       name: Duc-Tam Nguyen
@@ -109,7 +109,7 @@ scoops:
       name: scoop-bucket
       token: '{{ envOrDefault "SCOOP_BUCKET_GITHUB_TOKEN" "" }}'
     homepage: https://github.com/tamnd/arxiv-cli
-    description: A command line for arXiv.
+    description: Read arXiv's twelve public surfaces from the command line, with no API key.
     license: Apache-2.0
     skip_upload: '{{ if envOrDefault "SCOOP_BUCKET_GITHUB_TOKEN" "" }}false{{ else }}true{{ end }}'
     commit_author:
@@ -144,25 +144,25 @@ docker_signs:
       - "${artifact}@${digest}"
       - "--yes"
 
+# This repo writes commit subjects as plain imperative English rather than as
+# conventional commits, so the groups match the verb people actually type. The
+# stock feat:/fix: regexps would have put every commit in Other and looked like
+# the changelog was broken.
 changelog:
   sort: asc
   use: github
   filters:
     exclude:
-      - "^docs:"
-      - "^test:"
-      - "^chore:"
-      - "^ci:"
       - Merge pull request
       - Merge branch
   groups:
-    - title: Features
-      regexp: '^.*?feat(\(.+\))??!?:.+$'
+    - title: Added
+      regexp: '^[Aa]dd\b'
       order: 0
-    - title: Fixes
-      regexp: '^.*?fix(\(.+\))??!?:.+$'
+    - title: Fixed
+      regexp: '^[Ff]ix\b'
       order: 1
-    - title: Other
+    - title: Changed
       order: 999
 
 release:
