@@ -71,8 +71,10 @@ var registered = []string{
 	"count",
 	"download",
 	"edges",
+	"fields",
 	"files",
 	"fulltext",
+	"grammar",
 	"graph",
 	"id",
 	"list",
@@ -80,8 +82,10 @@ var registered = []string{
 	"paper",
 	"planes",
 	"predicates",
+	"routes",
 	"search",
 	"sets",
+	"surfaces",
 	"trackbacks",
 }
 
