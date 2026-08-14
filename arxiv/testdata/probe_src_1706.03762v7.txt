@@ -1,0 +1,18 @@
+HTTP/2 206 
+content-disposition: attachment; filename="arXiv-1706.03762v7.tar.gz"
+server: Google Frontend
+via: 1.1 google, 1.1 varnish, 1.1 varnish, 1.1 varnish
+last-modified: Fri, 04 Aug 2023 23:29:49 GMT
+content-type: application/gzip
+access-control-allow-origin: *
+etag: "sha256:57ddc809b42efb1163aad44aeac311df975f527a4b085731ad858948e89e137a"
+x-cloud-trace-context: e207e20f4508465de9b389fe0316becd
+accept-ranges: bytes
+age: 25191
+date: Fri, 14 Aug 2026 02:59:49 GMT
+x-served-by: cache-lga21980-LGA, cache-lga21980-LGA, cache-lga21941-LGA, cache-hkg17923-HKG
+x-cache: MISS, MISS, HIT
+x-timer: S1786676389.358245,VS0,VE1
+content-range: bytes 0-0/1150988
+content-length: 1
+
