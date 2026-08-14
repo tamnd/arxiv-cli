@@ -37,8 +37,12 @@ const PageSize = 100
 // one and a batch of them is longer than a batch of these.
 const MaxIDsPerRequest = 200
 
-// maxURLLen is the encoded length a batch is cut at, under the ceiling that
-// answered 400 with room to spare.
+// maxURLLen is the encoded length a batch is cut at.
+//
+// The ceiling is arXiv's, and it is on the request line rather than on the id
+// count: a longer one comes back as HTTP 400 with an HTML body reading
+// "Request Line is too large (4245 > 4094)", measured 2026-08-14. Four thousand
+// leaves ninety bytes of headroom for the method and the protocol version.
 const maxURLLen = 4000
 
 // A Request is one call to the export API.
@@ -167,17 +171,14 @@ func BatchIDs(ids []string) [][]string {
 	}
 	var out [][]string
 	batch := make([]string, 0, MaxIDsPerRequest)
-	length := len(apiBase) + len("?id_list=&max_results=200&sortBy=submittedDate&sortOrder=ascending")
-	used := length
+	used := requestOverhead
 
 	for _, id := range ids {
-		// A comma encodes as %2C and an old-style id's slash as %2F, so the
-		// worst case is three characters per byte plus the separator.
-		cost := len(url.QueryEscape(id)) + len("%2C")
+		cost := idCost(id)
 		if len(batch) > 0 && (len(batch) >= MaxIDsPerRequest || used+cost > maxURLLen) {
 			out = append(out, batch)
 			batch = make([]string, 0, MaxIDsPerRequest)
-			used = length
+			used = requestOverhead
 		}
 		batch = append(batch, id)
 		used += cost
@@ -186,4 +187,26 @@ func BatchIDs(ids []string) [][]string {
 		out = append(out, batch)
 	}
 	return out
+}
+
+// requestOverhead is everything in the URL that is not an id.
+var requestOverhead = len(apiBase) + len("?id_list=&max_results=200&sortBy=submittedDate&sortOrder=ascending")
+
+// idCost is what one id adds to the encoded length.
+//
+// A comma encodes as %2C and an old-style id's slash as %2F, so the worst case
+// is three characters per byte plus the separator.
+func idCost(id string) int { return len(url.QueryEscape(id)) + len("%2C") }
+
+// encodedLen is what a batch of ids will actually take up in the request line.
+//
+// It is the number BatchIDs cuts on, exported to the tests so the live test can
+// measure the same thing the batcher measures rather than a re-derivation of it
+// that could disagree.
+func encodedLen(ids []string) int {
+	used := requestOverhead
+	for _, id := range ids {
+		used += idCost(id)
+	}
+	return used
 }
