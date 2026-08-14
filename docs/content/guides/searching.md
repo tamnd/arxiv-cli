@@ -4,11 +4,21 @@ description: "The field flags, the raw grammar, the ten thousand result window, 
 weight: 10
 ---
 
-The positional argument matches every indexed field.
+The positional argument matches every indexed field, a word at a time, with a quoted phrase kept whole.
 
 ```bash
 arxiv search "attention is all you need"
 ```
+
+If what you type is already arXiv's grammar, with a field prefix or a bare `AND`, `OR` or `ANDNOT` in it, it goes out as written and the flags still compose around it.
+
+```bash
+arxiv search 'ti:"attention is all you need" AND cat:cs.CL'
+arxiv search 'ti:transformer OR ti:attention' --cat cs.CL
+```
+
+The second one sends `(ti:transformer OR ti:attention) AND cat:cs.CL`.
+The parentheses are added because otherwise the trailing `AND` would bind to the last term alone and quietly answer a different question.
 
 The field flags are arXiv's own prefixes under readable names, and they AND together.
 
@@ -62,6 +72,7 @@ That is the reading a person means when they say "up to January", and getting it
 ## The raw grammar
 
 `--raw` sends a query through untouched, for the parts the flags do not cover: parentheses, `OR`, `ANDNOT` and quoted phrases.
+A grammar query typed as the positional argument composes with the flags; `--raw` is the one that promises nothing at all will be added to it, which is why it refuses to be combined with them.
 
 ```bash
 arxiv search --raw 'abs:"large language model" ANDNOT cat:cs.CL'

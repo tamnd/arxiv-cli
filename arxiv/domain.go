@@ -153,7 +153,7 @@ func htmlRateOf(cfg kit.Config) (time.Duration, error) {
 // asserts the two lists stay identical, which is the part that would otherwise
 // drift.
 type searchIn struct {
-	Query    string   `kit:"arg" help:"what to search for, matched against every field"`
+	Query    string   `kit:"arg" help:"words to search for, or a query in arXiv's grammar"`
 	Raw      string   `kit:"flag" help:"a query in arXiv's own grammar, sent unchanged"`
 	Category []string `kit:"flag,name=cat" help:"a category code such as cs.LG, repeatable and OR'd"`
 	Author   string   `kit:"flag" help:"match the author field"`
@@ -223,10 +223,13 @@ func registerSearch(app *kit.App) {
 		Args:    []kit.Arg{{Name: "query", Help: "what to search for", Optional: true}},
 		Long: `Search arXiv papers.
 
-The positional query is matched against every indexed field. The field flags
-are arXiv's own search prefixes under readable names, so --title attention
---author vaswani sends ti:attention AND au:vaswani, and -v prints both the
-query that was built and the URL it went out on.
+The positional query is matched against every indexed field, a word at a time,
+with a quoted phrase kept whole. If it is written in arXiv's grammar instead,
+with a field prefix or a bare AND, OR or ANDNOT in it, it goes out as written
+and the flags still compose around it. The field flags are arXiv's own search
+prefixes under readable names, so --title attention --author vaswani sends
+ti:attention AND au:vaswani, and -v prints both the query that was built and
+the URL it went out on.
 
 --cat takes a category code and repeats, and the codes are OR'd together. A
 bare archive code such as hep-th or cs matches whether or not that archive was
@@ -264,7 +267,7 @@ request.`,
 
 // countIn is searchIn without the ordering flags, which a count has no use for.
 type countIn struct {
-	Query    string   `kit:"arg" help:"what to search for, matched against every field"`
+	Query    string   `kit:"arg" help:"words to search for, or a query in arXiv's grammar"`
 	Raw      string   `kit:"flag" help:"a query in arXiv's own grammar, sent unchanged"`
 	Category []string `kit:"flag,name=cat" help:"a category code such as cs.LG, repeatable and OR'd"`
 	Author   string   `kit:"flag" help:"match the author field"`

@@ -60,6 +60,26 @@ func TestSearchQueryFromFlags(t *testing.T) {
 			"(cat:cs.CL OR cat:cs.LG) ANDNOT ti:survey",
 		},
 		{
+			"a quoted phrase in the positional stays one term",
+			SearchOptions{Query: `"attention is all you need"`},
+			`all:"attention is all you need"`,
+		},
+		{
+			"a positional written in arXiv's grammar goes out as written",
+			SearchOptions{Query: `ti:"attention is all you need" AND cat:cs.CL`},
+			`ti:"attention is all you need" AND cat:cs.CL`,
+		},
+		{
+			"a grammar positional is parenthesised before a flag is ANDed onto it",
+			SearchOptions{Query: "ti:transformer OR ti:attention", Categories: []string{"cs.CL"}},
+			"(ti:transformer OR ti:attention) AND cat:cs.CL",
+		},
+		{
+			"a bare operator is grammar too",
+			SearchOptions{Query: "electron ANDNOT positron"},
+			"electron ANDNOT positron",
+		},
+		{
 			"a date bound becomes a range clause at minute resolution",
 			SearchOptions{Categories: []string{"cs.CL"}, From: "2026-01", To: "2026-01"},
 			"cat:cs.CL AND submittedDate:[202601010000 TO 202601312359]",
@@ -73,6 +93,69 @@ func TestSearchQueryFromFlags(t *testing.T) {
 	for _, tc := range cases {
 		if got := query(t, tc.opts); got != tc.want {
 			t.Errorf("%s:\n got %q\nwant %q", tc.name, got, tc.want)
+		}
+	}
+}
+
+// TestGrammarPositionalSurvives is the second escaping bug, found by working
+// through the acceptance list. A query typed in arXiv's own grammar was cut on
+// spaces and every word prefixed, so ti:"attention is all you need" AND
+// cat:cs.CL went out as all:ti:"attention AND all:is AND ... AND all:AND AND
+// all:cat:cs.CL and arXiv answered "Invalid query string".
+func TestGrammarPositionalSurvives(t *testing.T) {
+	const typed = `ti:"attention is all you need" AND cat:cs.CL`
+	got := query(t, SearchOptions{Query: typed})
+	if got != typed {
+		t.Errorf("query:\n got %q\nwant %q", got, typed)
+	}
+}
+
+func TestIsGrammar(t *testing.T) {
+	grammar := []string{
+		`ti:"attention is all you need" AND cat:cs.CL`,
+		"cat:cs.CL",
+		"electron ANDNOT positron",
+		"(ti:transformer OR ti:attention)",
+		"au:vaswani",
+		"id:1706.03762",
+	}
+	words := []string{
+		"attention",
+		"attention transformer",
+		`"attention is all you need"`,
+		// Not a prefix arXiv has, so it is a word with a colon in it and not a
+		// clause. Sending it as grammar would be sending arXiv something it
+		// answers with an error.
+		"title:attention",
+		"schrodinger and heisenberg",
+	}
+	for _, s := range grammar {
+		if !isGrammar(s) {
+			t.Errorf("isGrammar(%q) = false, want true", s)
+		}
+	}
+	for _, s := range words {
+		if isGrammar(s) {
+			t.Errorf("isGrammar(%q) = true, want false", s)
+		}
+	}
+}
+
+func TestSplitTerms(t *testing.T) {
+	cases := []struct {
+		in   string
+		want []string
+	}{
+		{"attention transformer", []string{"attention", "transformer"}},
+		{`"attention is all you need"`, []string{`"attention is all you need"`}},
+		{`ti:"a b" AND cat:cs.CL`, []string{`ti:"a b"`, "AND", "cat:cs.CL"}},
+		{"  spaced   out\tby\ttabs ", []string{"spaced", "out", "by", "tabs"}},
+		{`"unclosed quote`, []string{`"unclosed quote"`}},
+		{"", nil},
+	}
+	for _, tc := range cases {
+		if got := splitTerms(tc.in); !reflect.DeepEqual(got, tc.want) {
+			t.Errorf("splitTerms(%q) = %q, want %q", tc.in, got, tc.want)
 		}
 	}
 }

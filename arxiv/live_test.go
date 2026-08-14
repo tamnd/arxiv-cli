@@ -2076,6 +2076,34 @@ func TestLiveTermAndCategoryTogetherStillCount(t *testing.T) {
 	}
 }
 
+// TestLiveGrammarPositionalFindsThePaper is the other acceptance case, live.
+//
+// A query typed in arXiv's own grammar used to be cut on spaces and prefixed
+// word by word, which arXiv answered with "Invalid query string", so this
+// asserts both that it is accepted and that the paper it names comes back
+// first. An accepted query that ranked the right paper tenth would mean the
+// phrase quoting had been lost somewhere.
+func TestLiveGrammarPositionalFindsThePaper(t *testing.T) {
+	c := liveClient(t)
+
+	opts := SearchOptions{Query: `ti:"attention is all you need" AND cat:cs.CL`, Limit: 5}
+	papers, err := c.Search(context.Background(), opts)
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(papers) == 0 {
+		t.Fatal("no results, which is what the old word by word build produced before arXiv started rejecting it outright")
+	}
+	if papers[0].ID != "1706.03762" {
+		t.Errorf("first result is %s (%q), want 1706.03762", papers[0].ID, papers[0].Title)
+	}
+	for _, p := range papers {
+		if p.PrimaryCategory != "cs.CL" && !contains(p.Categories, "cs.CL") {
+			t.Errorf("%s is in %v, so the cat clause did not survive", p.ID, p.Categories)
+		}
+	}
+}
+
 // provoke gates the one test in this file that is rude.
 //
 //	go test ./arxiv -tags live -run RateLimit -provoke-rate-limit -v
