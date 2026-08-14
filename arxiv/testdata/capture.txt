@@ -21,7 +21,9 @@ api_1706.03762.xml	s1	2026-08-13	https://export.arxiv.org/api/query?id_list=1706
 api_error_start.xml	s1	2026-08-14	https://export.arxiv.org/api/query?search_query=all:electron&start=nope&max_results=1
 api_hep-th_9711200.xml	s1	2026-08-14	https://export.arxiv.org/api/query?id_list=hep-th/9711200&max_results=1
 api_zero_results.xml	s1	2026-08-14	https://export.arxiv.org/api/query?search_query=all:%22zzqqxx+not+a+real+phrase+anywhere%22&max_results=5
+golden_1207.7214_full.json	-	2026-08-14	go test ./arxiv -run Golden -update
 golden_1706.03762_full.json	-	2026-08-13	go test ./arxiv -run Golden -update
+golden_hep-th_9711200_full.json	-	2026-08-14	go test ./arxiv -run Golden -update
 list_cs.CL_2026-01.html	s4	2026-08-14	https://arxiv.org/list/cs.CL/2026-01?skip=0&show=50
 list_cs.CL_recent.html	s4	2026-08-14	https://arxiv.org/list/cs.CL/recent?skip=0&show=50
 list_math.AG_2026-01.html	s4	2026-08-14	https://arxiv.org/list/math.AG/2026-01?skip=0&show=50
@@ -30,6 +32,7 @@ oai_arxiv_1706.03762.xml	s2	2026-08-13	https://oaipmh.arxiv.org/oai?verb=GetReco
 oai_arxiv_hep-th_9711200.xml	s2	2026-08-14	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:hep-th/9711200&metadataPrefix=arXiv
 oai_dc_1207.7214.xml	s2	2026-08-14	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:1207.7214&metadataPrefix=oai_dc
 oai_dc_1706.03762.xml	s2	2026-08-14	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:1706.03762&metadataPrefix=oai_dc
+oai_raw_1207.7214.xml	s2	2026-08-14	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:1207.7214&metadataPrefix=arXivRaw
 oai_raw_1706.03762.xml	s2	2026-08-13	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:1706.03762&metadataPrefix=arXivRaw
 oai_raw_hep-th_9711200.xml	s2	2026-08-14	https://oaipmh.arxiv.org/oai?verb=GetRecord&identifier=oai:arXiv.org:hep-th/9711200&metadataPrefix=arXivRaw
 rate_exceeded.txt	s4	2026-08-13	https://arxiv.org/list/cs.CL/2026-01?skip=50&show=25

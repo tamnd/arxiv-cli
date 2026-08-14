@@ -1,0 +1,89 @@
+{
+  "kind": "paper",
+  "surfaces": [
+    "s1",
+    "s2",
+    "s3"
+  ],
+  "sources": [
+    "https://export.arxiv.org/api/query",
+    "https://oaipmh.arxiv.org/oai?identifier=oai%3AarXiv.org%3A1207.7214\u0026metadataPrefix=arXiv",
+    "https://oaipmh.arxiv.org/oai?identifier=oai%3AarXiv.org%3A1207.7214\u0026metadataPrefix=arXivRaw",
+    "https://arxiv.org/abs/1207.7214"
+  ],
+  "retrieved_at": "2026-08-06T12:00:00Z",
+  "via": {
+    "abstract": "s1",
+    "authors": "s2",
+    "categories": "s1",
+    "comment": "s1",
+    "first_submitted": "s1",
+    "has_html": "s3",
+    "has_source": "s3",
+    "journal_ref": "s1",
+    "last_updated": "s1",
+    "license": "s2",
+    "oai_datestamp": "s2",
+    "publisher_doi": "s1",
+    "report_no": "s2",
+    "subject_names": "s3",
+    "submitter": "s2",
+    "title": "s1",
+    "versions": "s2"
+  },
+  "missed": [
+    "affiliations, the licence name and the section tree were not read; arxiv paper 1207.7214 --depth text reads them"
+  ],
+  "id": "1207.7214",
+  "version": 2,
+  "is_latest": true,
+  "versioned_id": "1207.7214v2",
+  "oai_id": "oai:arXiv.org:1207.7214",
+  "doi": "10.48550/arXiv.1207.7214",
+  "publisher_doi": "10.1016/j.physletb.2012.08.020",
+  "url": "https://arxiv.org/abs/1207.7214v2",
+  "style": "new",
+  "title": "Observation of a new particle in the search for the Standard Model Higgs boson with the ATLAS detector at the LHC",
+  "abstract": "A search for the Standard Model Higgs boson in proton-proton collisions with the ATLAS detector at the LHC is presented. The datasets used correspond to integrated luminosities of approximately 4.8 fb^-1 collected at sqrt(s) = 7 TeV in 2011 and 5.8 fb^-1 at sqrt(s) = 8 TeV in 2012. Individual searches in the channels H-\u003eZZ^(*)-\u003ellll, H-\u003egamma gamma and H-\u003eWW-\u003ee nu mu nu in the 8 TeV data are combined with previously published results of searches for H-\u003eZZ^(*), WW^(*), bbbar and tau^+tau^- in the 7 TeV data and results from improved analyses of the H-\u003eZZ^(*)-\u003ellll and H-\u003egamma gamma channels in the 7 TeV data. Clear evidence for the production of a neutral boson with a measured mass of 126.0 +/- 0.4(stat) +/- 0.4(sys) GeV is presented. This observation, which has a significance of 5.9 standard deviations, corresponding to a background fluctuation probability of 1.7x10^-9, is compatible with the production and decay of the Standard Model Higgs boson.",
+  "comment": "24 pages plus author list (38 pages total), 12 figures, 7 tables, revised author list, matches version to appear in Physics Letters B",
+  "journal_ref": "Phys.Lett. B716 (2012) 1-29",
+  "report_no": "CERN-PH-EP-2012-218",
+  "authors": [
+    {
+      "name": "The ATLAS Collaboration",
+      "via": "s2"
+    }
+  ],
+  "primary_category": "hep-ex",
+  "categories": [
+    "hep-ex"
+  ],
+  "subject_names": {
+    "hep-ex": "High Energy Physics - Experiment"
+  },
+  "first_submitted": "2012-07-31T11:59:59Z",
+  "last_updated": "2012-08-31T19:29:54Z",
+  "oai_datestamp": "2012-09-04T00:00:00Z",
+  "versions": [
+    {
+      "version": 1,
+      "date": "2012-07-31T11:59:59Z",
+      "size_bytes": 342016,
+      "via": "s2"
+    },
+    {
+      "version": 2,
+      "date": "2012-08-31T19:29:54Z",
+      "size_bytes": 340992,
+      "via": "s2"
+    }
+  ],
+  "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+  "pdf_url": "https://arxiv.org/pdf/1207.7214v2",
+  "html_url": "https://arxiv.org/html/1207.7214v2",
+  "has_html": true,
+  "has_source": true,
+  "submitter": "Atlas Publications",
+  "withdrawn": false,
+  "depth": "full"
+}
