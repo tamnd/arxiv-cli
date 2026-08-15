@@ -2195,3 +2195,37 @@ func TestLiveRateLimitBacksOffAndCompletes(t *testing.T) {
 		t.Errorf("the last request answered %d", statuses[len(statuses)-1])
 	}
 }
+
+// TestLiveWithdrawnPaper is the guard on the one marker that says a paper is no
+// longer being offered.
+//
+// 0902.4054 is a paper the author withdrew in March 2009. arXiv marks the
+// newest version (withdrawn) in the submission history and says nothing about
+// it anywhere else that can be read without guessing at prose, so if that em
+// element ever moves this is what notices.
+func TestLiveWithdrawnPaper(t *testing.T) {
+	c := liveClient(t)
+	p, err := c.PaperAt(context.Background(), "0902.4054", PaperOptions{Depth: DepthFull})
+	if err != nil {
+		t.Fatalf("full read: %v", err)
+	}
+	if !p.Withdrawn {
+		t.Errorf("0902.4054 is withdrawn and the record says %v, comment %q", p.Withdrawn, p.Comment)
+	}
+	if p.Via["withdrawn"] != SurfaceAbs {
+		t.Errorf("withdrawn came via %q, want %s", p.Via["withdrawn"], SurfaceAbs)
+	}
+	if len(p.Versions) < 2 {
+		t.Fatalf("the history came back with %d versions", len(p.Versions))
+	}
+	last := p.Versions[len(p.Versions)-1]
+	if !last.Withdrawn {
+		t.Errorf("v%d is the withdrawn one and the record does not say so", last.Version)
+	}
+	if p.Versions[0].Withdrawn {
+		t.Error("v1 was not withdrawn and the marker landed on it anyway")
+	}
+	if p.Title == "" {
+		t.Error("a withdrawn paper still has a title and this one lost it")
+	}
+}

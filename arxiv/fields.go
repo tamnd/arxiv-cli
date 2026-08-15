@@ -148,8 +148,8 @@ var fieldRows = []FieldInfo{
 		Note: "whether arXiv offers the submission source at all"},
 	{Field: "submitter", Group: "files", Depth: "full", Surfaces: []string{SurfaceOAI, SurfaceAbs},
 		Note: "arXivRaw names them, and the abstract page prints them beside v1"},
-	{Field: "withdrawn", Group: "files", Depth: "meta", Surfaces: []string{SurfaceOAI},
-		Note: "from an OAI header with status deleted; a withdrawn paper still has a history"},
+	{Field: "withdrawn", Group: "files", Depth: "meta", Surfaces: []string{SurfaceOAI, SurfaceAbs},
+		Note: "an OAI deleted header, or the abstract page marking the newest version withdrawn"},
 
 	// ─── search and listing only ───
 

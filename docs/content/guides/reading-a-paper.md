@@ -57,6 +57,29 @@ Pinning a version in the reference reads that version.
 arxiv paper 1706.03762v1
 ```
 
+## Withdrawn papers
+
+A paper the author withdrew is still on arXiv, with its id, its title and its history.
+What changes is that a short new version goes on top and arXiv marks that version withdrawn.
+
+```console
+$ arxiv paper 0902.4054 --depth full -o json | jq '.[0] | {withdrawn, via: .via.withdrawn, comment}'
+{
+  "withdrawn": true,
+  "via": "s3",
+  "comment": "This paper has been withdrawn"
+}
+```
+
+`withdrawn` is read from the marker in the submission history and not from the comment, because comments are prose.
+They run from `Withdrawn` to four sentences of explanation, and `v1's main result and mechanism claim are withdrawn` is a comment on a paper that is still very much there.
+
+Each version says whether it is the withdrawn one, so a paper withdrawn at v2 and replaced at v3 reads as a paper that is there.
+
+It costs `--depth full`, because only the abstract page carries the marker.
+There is a second route, an OAI header saying `deleted`, which is arXiv removing a record rather than an author withdrawing a paper, and it comes back as `"via": "s2"` when it happens.
+It is rare enough that 40,000 OAI headers sampled on 2026-08-15 contained none.
+
 ## Files
 
 ```bash

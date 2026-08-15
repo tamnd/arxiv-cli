@@ -201,7 +201,7 @@ var Mapping = []Row{
 	{What: "msc_class", Kind: "field", Terms: []IRI{IRI(NSAX + "mscClass")}, Evidence: "s2 arXivRaw"},
 	{What: "acm_class", Kind: "field", Terms: []IRI{IRI(NSAX + "acmClass")}, Evidence: "s2 arXivRaw"},
 	{What: "pdf_url", Kind: "field", Terms: []IRI{SchemaEncoding}, Evidence: "citation_pdf_url"},
-	{What: "withdrawn", Kind: "field", Terms: []IRI{IRI(NSAX + "withdrawn")}, Evidence: "s2, an OAI header saying deleted"},
+	{What: "withdrawn", Kind: "field", Terms: []IRI{IRI(NSAX + "withdrawn")}, Evidence: "s2, an OAI header saying deleted, or s3 marking the newest version withdrawn"},
 
 	// The other three records that carry a name of their own. A category's name
 	// is a preferred label rather than a title, because a category is a concept

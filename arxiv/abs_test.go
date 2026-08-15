@@ -268,3 +268,68 @@ func TestAbsolute(t *testing.T) {
 		t.Errorf("an absolute href was rewritten: %q", got)
 	}
 }
+
+// TestParseAbsWithdrawn reads a paper the author withdrew.
+//
+// 0902.4054 is v1 in February 2009 and a one kilobyte v2 a month later that
+// arXiv marks (withdrawn) in the submission history. It is the common case by a
+// long way: arXiv declares its deletedRecord policy persistent, but sampling
+// 40,000 OAI headers across four windows on 2026-08-15 turned up no header with
+// status="deleted" at all, and a search of the comment field returns thousands
+// of withdrawals.
+func TestParseAbsWithdrawn(t *testing.T) {
+	page := absFixture(t, "abs_0902.4054_withdrawn.html")
+
+	if !page.Withdrawn {
+		t.Fatal("a page whose newest version is marked (withdrawn) did not say so")
+	}
+	if len(page.Versions) != 2 {
+		t.Fatalf("Versions: got %d, want 2", len(page.Versions))
+	}
+	if page.Versions[0].Withdrawn {
+		t.Error("v1 is not the withdrawn one")
+	}
+	if !page.Versions[1].Withdrawn {
+		t.Error("v2 is the withdrawn one and did not say so")
+	}
+	if page.Comment != "This paper has been withdrawn" {
+		t.Errorf("Comment: got %q", page.Comment)
+	}
+}
+
+// TestParseAbsNotWithdrawn is the other half of the pair. A page with no marker
+// leaves every version alone, which is the assertion that stops the regexp
+// group from matching whatever follows the size.
+func TestParseAbsNotWithdrawn(t *testing.T) {
+	page := absFixture(t, "abs_1706.03762.html")
+
+	if page.Withdrawn {
+		t.Error("the Attention paper is not withdrawn")
+	}
+	for _, v := range page.Versions {
+		if v.Withdrawn {
+			t.Errorf("v%d of a live paper is marked withdrawn", v.Version)
+		}
+	}
+}
+
+// TestMarkWithdrawnCarriesOver covers the merge arXivRaw wins. It names the
+// source type, so it keeps the history, and it has no withdrawal marker at all,
+// so the flag has to be carried across by version number.
+func TestMarkWithdrawnCarriesOver(t *testing.T) {
+	raw := []Version{
+		{Version: 1, Via: SurfaceOAI, SourceType: "I"},
+		{Version: 2, Via: SurfaceOAI, SourceType: "I"},
+	}
+	markWithdrawn(raw, []Version{{Version: 2, Withdrawn: true}})
+
+	if raw[0].Withdrawn {
+		t.Error("v1 was marked and should not have been")
+	}
+	if !raw[1].Withdrawn {
+		t.Error("v2 lost its marker on the way over from the page")
+	}
+	if raw[1].SourceType != "I" {
+		t.Errorf("the carry over overwrote the source type: %q", raw[1].SourceType)
+	}
+}
