@@ -50,6 +50,11 @@ If it never clears, the command exits 5 with the elapsed time.
 Nothing you pass will make this go faster.
 A `--rate` below its floor is refused, and the floor exists because ignoring `robots.txt` is how a tool gets an IP blocked for everyone using it.
 
+The export API does this on a long walk even at the three second pace it asks for.
+A 25,000 id walk of `cat:cs.CL` on 2026-08-15 took about fifty minutes and was held three times on the way, and it finished with 25,000 distinct ids because the hold is on the plane rather than on the walk.
+Leave it running.
+A walk that has been paused for ten minutes is not stuck, and killing it and starting again is the one thing that makes it slower, since the retry clock starts over and the count requests that planned the slices are paid for twice.
+
 ## A category returns nothing
 
 Check the code.

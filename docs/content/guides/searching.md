@@ -107,6 +107,20 @@ arxiv search --cat cs.CL --from 2026-01 --all -o jsonl > cs-cl-2026.jsonl
 The walk runs in submission order rather than relevance order, and that is not a preference.
 Relevance is recomputed on every request, so a walk ordered by it both repeats and skips papers, and you would never know which.
 
+A long walk says what it is about to cost before it starts, and `-vv` names each slice as it reaches it.
+
+```console
+$ arxiv search cat:cs.CL --all -n 25000 -vv
+116325 results in 18 slices, 35 count requests to plan and about 1170 to walk
+slice 1 of 18, 199108010000 to 200902061159, 1585 results
+slice 2 of 18, 200902061200 to 201711110559, 6000 results
+slice 3 of 18, 201711110600 to 202001200429, 6000 results
+...
+```
+
+Twenty five thousand ids took about fifty minutes on the three second pace, most of it waiting.
+arXiv answered 429 a few times along the way, and the tool held the whole plane and carried on rather than losing the walk.
+
 To learn only how many results a query has, use `arxiv count`, which is one request.
 
 ```bash

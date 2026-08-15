@@ -3,6 +3,7 @@ package arxiv
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -574,7 +575,12 @@ func (c *Client) searchAll(ctx context.Context, p searchPlan, emit func(*Paper) 
 
 	limit := p.Limit
 	sent := 0
-	for _, s := range plan.Slices {
+	for i, s := range plan.Slices {
+		// The plan line says how many slices there are and the GET lines say what
+		// was asked for, but neither says which slice a request belongs to, and on
+		// a walk that takes half an hour that is the thing you want to know when
+		// you come back to the terminal.
+		c.logf(1, "%s", sliceLine(i, plan.Slices))
 		for _, req := range s.Pages(base, field) {
 			n, err := c.page(ctx, req, func(paper *Paper) error {
 				if limit > 0 && sent >= limit {
@@ -595,6 +601,23 @@ func (c *Client) searchAll(ctx context.Context, p searchPlan, emit func(*Paper) 
 		}
 	}
 	return nil
+}
+
+// sliceLine is the sentence a walk prints as it reaches slice number i.
+//
+// It carries the range and the count because those are what say whether the
+// bisection did a sensible job, and the position because a walk of eighteen
+// slices takes half an hour and the useful question when you come back to the
+// terminal is how far in it is.
+func sliceLine(i int, all []Slice) string {
+	s := all[i]
+	line := fmt.Sprintf("slice %d of %d, %s to %s, %d results",
+		i+1, len(all), Stamp(s.Range.From), Stamp(s.Range.To), s.Total)
+	if s.Truncated {
+		return line + ", of which only the first " +
+			strconv.Itoa(ResultWindow) + " can be reached"
+	}
+	return line
 }
 
 // planLine is the sentence a walk prints before it starts.

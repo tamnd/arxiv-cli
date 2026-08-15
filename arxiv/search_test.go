@@ -422,6 +422,32 @@ func TestPlanLine(t *testing.T) {
 	}
 }
 
+func TestSliceLine(t *testing.T) {
+	// The two leaves are the first two the slicer cut for cat:cs.CL on
+	// 2026-08-15, and the counts are what arXiv answered for them.
+	all := []Slice{
+		{Range: NewRange(
+			time.Date(1991, 8, 1, 0, 0, 0, 0, time.UTC),
+			time.Date(2009, 2, 6, 11, 59, 0, 0, time.UTC)), Total: 1585},
+		{Range: NewRange(
+			time.Date(2009, 2, 6, 12, 0, 0, 0, time.UTC),
+			time.Date(2017, 11, 11, 5, 59, 0, 0, time.UTC)), Total: 6000},
+	}
+	got := sliceLine(0, all)
+	want := "slice 1 of 2, 199108010000 to 200902061159, 1585 results"
+	if got != want {
+		t.Errorf("first slice:\n got %q\nwant %q", got, want)
+	}
+	want = "slice 2 of 2, 200902061200 to 201711110559, 6000 results"
+	if got := sliceLine(1, all); got != want {
+		t.Errorf("second slice:\n got %q\nwant %q", got, want)
+	}
+	cut := []Slice{{Total: 20000, Truncated: true}}
+	if got := sliceLine(0, cut); !strings.Contains(got, "only the first 10000 can be reached") {
+		t.Errorf("a truncated slice said nothing about it: %q", got)
+	}
+}
+
 // TestSearchAndCountTakeTheSameQueryFlags is the guard on the one duplication
 // in the command layer. kit binds the fields a struct declares and not the ones
 // it promotes, so the query flags are written out twice, and this is what stops
