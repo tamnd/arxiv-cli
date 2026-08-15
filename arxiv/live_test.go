@@ -668,6 +668,30 @@ func TestLiveShortMonthStill404s(t *testing.T) {
 	}
 }
 
+// skipIfNoAnnouncement skips a feed test on a day arXiv does not announce.
+//
+// The feed is not broken at the weekend, it is empty, and it is empty because
+// nothing was announced. arXiv announces on weekdays and skips US holidays, and
+// the feed on one of those days is a well formed channel with no items in it.
+//
+// It skips rather than passes. An empty feed proves nothing about the four
+// announce types, and a test that goes green on a Saturday without having read
+// an item is worse than one that says it did not run.
+func skipIfNoAnnouncement(t *testing.T) {
+	t.Helper()
+	// In arXiv's own clock, because the feed is stamped -0400 and a Sunday
+	// evening in Ithaca is a Monday in UTC.
+	now := time.Now()
+	if loc, err := time.LoadLocation("America/New_York"); err == nil {
+		now = now.In(loc)
+	}
+	if day := now.Weekday(); day == time.Saturday || day == time.Sunday {
+		t.Skipf("no announcement on a %s, so the feed has nothing in it to check", day)
+	}
+	// A weekday with an empty feed is either a US holiday or arXiv being
+	// broken, and only one of those is worth a failure. The caller decides.
+}
+
 // TestLiveFeedHasEveryAnnounceType reads a real feed and checks that all four
 // types are still published under those names. The whole command is built on
 // that field.
@@ -678,7 +702,8 @@ func TestLiveFeedHasEveryAnnounceType(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(items) == 0 {
-		t.Fatal("the cs.CL feed is empty, which it never is on a weekday")
+		skipIfNoAnnouncement(t)
+		t.Fatal("the cs.CL feed is empty on a weekday, which does not happen")
 	}
 	counts := map[string]int{}
 	for _, a := range items {
@@ -709,6 +734,9 @@ func TestLiveFeedFilter(t *testing.T) {
 	all, err := c.Announcements(ctx, FeedOptions{Category: "cs.CL"})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if len(all) == 0 {
+		skipIfNoAnnouncement(t)
 	}
 	only, err := c.Announcements(ctx, FeedOptions{Category: "cs.CL", Types: []string{AnnounceNew}})
 	if err != nil {
