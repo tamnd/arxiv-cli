@@ -40,9 +40,12 @@ type absPage struct {
 	License         string
 	Submitter       string
 	Versions        []Version
-	HasHTML         bool
-	HasSource       bool
-	HTMLURL         string
+	// Withdrawn is set when the newest version in the history carries arXiv's
+	// (withdrawn) marker.
+	Withdrawn bool
+	HasHTML   bool
+	HasSource bool
+	HTMLURL   string
 }
 
 // getAbs fetches and parses the abstract page.
@@ -207,8 +210,14 @@ func parseAbsFullText(doc *goquery.Document, page *absPage) {
 }
 
 // historyRe matches one line of the submission history: the version, the
-// timestamp and the size.
-var historyRe = regexp.MustCompile(`\[v(\d+)\]\s*(.+?)\s*\(([\d,]+)\s*([KMkm]B)\)`)
+// timestamp, the size, and the marker arXiv puts after a version it withdrew.
+//
+// The marker is its own em element on the page, so it is a fact arXiv states
+// rather than something read out of the comment. That distinction matters: the
+// comments on withdrawn papers run from "Withdrawn" to four sentences of
+// explanation to "v1's main result is withdrawn" on a paper that is still very
+// much there, and no amount of prose matching separates those reliably.
+var historyRe = regexp.MustCompile(`\[v(\d+)\]\s*(.+?)\s*\(([\d,]+)\s*([KMkm]B)\)\s*(\(withdrawn\))?`)
 
 // absDateLayouts are the submission history's timestamps, which are RFC 1123
 // with a UTC zone name and a day that is sometimes space padded.
@@ -243,9 +252,16 @@ func parseAbsHistory(doc *goquery.Document, page *absPage) {
 		if size, ok := parseSize(m[3], m[4]); ok {
 			v.SizeBytes = size
 		}
+		v.Withdrawn = m[5] != ""
 		page.Versions = append(page.Versions, v)
 	}
 	sortVersions(page.Versions)
+	if n := len(page.Versions); n > 0 {
+		// The paper is withdrawn when its newest version is, and not when any
+		// version is. A paper withdrawn at v2 and replaced at v3 is a paper that
+		// is there.
+		page.Withdrawn = page.Versions[n-1].Withdrawn
+	}
 }
 
 // parseAbsDate reads a submission history timestamp in UTC.
@@ -294,6 +310,21 @@ func absolute(href string) string {
 	return href
 }
 
+// markWithdrawn copies the abstract page's withdrawal markers onto a history
+// that came from somewhere else, matching on the version number.
+func markWithdrawn(into, from []Version) {
+	for _, f := range from {
+		if !f.Withdrawn {
+			continue
+		}
+		for i := range into {
+			if into[i].Version == f.Version {
+				into[i].Withdrawn = true
+			}
+		}
+	}
+}
+
 // mergeAbs folds an abstract page into a paper.
 //
 // The page is the last surface a full read touches, so almost everything it
@@ -322,6 +353,15 @@ func mergeAbs(p *Paper, page *absPage, source string) {
 	if len(p.Versions) == 0 && len(page.Versions) > 0 {
 		p.Versions = page.Versions
 		p.setVia("versions", SurfaceAbs)
+	} else {
+		// arXivRaw won the history, but it has no withdrawal marker at all, so
+		// the flag is carried over by version number rather than lost with the
+		// rest of the page's copy.
+		markWithdrawn(p.Versions, page.Versions)
+	}
+	if page.Withdrawn && !p.Withdrawn {
+		p.Withdrawn = true
+		p.setVia("withdrawn", SurfaceAbs)
 	}
 	if p.License == "" && page.License != "" {
 		p.License = page.License

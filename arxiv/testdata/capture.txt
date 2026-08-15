@@ -13,6 +13,7 @@
 # was read, and the URL it was read from.
 
 a_baez_j_1.html	s8	2026-08-14	https://arxiv.org/a/baez_j_1
+abs_0902.4054_withdrawn.html	s3	2026-08-15	https://arxiv.org/abs/0902.4054
 abs_1207.7214.html	s3	2026-08-14	https://arxiv.org/abs/1207.7214
 abs_1706.03762.html	s3	2026-08-13	https://arxiv.org/abs/1706.03762
 abs_hep-th_9711200.html	s3	2026-08-14	https://arxiv.org/abs/hep-th/9711200

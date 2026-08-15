@@ -226,9 +226,17 @@ type Paper struct {
 	HasHTML   bool   `json:"has_html" table:"-"`
 	HasSource bool   `json:"has_source" table:"-"`
 	Submitter string `json:"submitter,omitempty" table:"-"`
-	// Withdrawn comes from an OAI header with status="deleted". A withdrawn
-	// paper still has an id, a title and a history, and it must not silently
-	// vanish from a result set.
+	// Withdrawn is set from either of the two things arXiv does to a paper that
+	// is no longer being offered, and Via says which one answered.
+	//
+	// s2 has an OAI header with status="deleted", which is arXiv removing the
+	// record. s3 marks the newest version (withdrawn) in the submission
+	// history, which is the author withdrawing the paper and is far commoner:
+	// there are thousands of those and the OAI deleted header did not appear
+	// once in 40,000 headers sampled across four windows on 2026-08-15.
+	//
+	// Either way the paper still has an id, a title and a history, and it must
+	// not silently vanish from a result set.
 	Withdrawn bool `json:"withdrawn" table:"-"`
 
 	// Hits are the query terms arXiv highlighted in this result, which only a
@@ -291,7 +299,11 @@ type Version struct {
 	// An unrecognised letter leaves SourceKind absent rather than guessing.
 	SourceType string `json:"source_type,omitempty"`
 	SourceKind string `json:"source_kind,omitempty"`
-	Via        string `json:"via,omitempty"`
+	// Withdrawn is set when the abstract page marks this version withdrawn.
+	// Only s3 says it, so a paper read without s3 leaves it false on every
+	// version, which is why the paper's own Withdrawn carries a via.
+	Withdrawn bool   `json:"withdrawn,omitempty"`
+	Via       string `json:"via,omitempty"`
 }
 
 // sourceKinds is what the letters mean. D and I are the two seen in the wild as
@@ -434,7 +446,7 @@ func (d Depth) Missed(id string) []string {
 		out = append(out, deeper("report number, MSC and ACM class, the licence and structured author names", "meta"))
 	}
 	if !d.AtLeast(DepthFull) {
-		out = append(out, deeper("the submitter, the version history and the html and source capabilities", "full"))
+		out = append(out, deeper("the submitter, the version history, whether the author withdrew it and the html and source capabilities", "full"))
 	}
 	if !d.AtLeast(DepthText) {
 		out = append(out, deeper("affiliations, the licence name and the section tree", "text"))
